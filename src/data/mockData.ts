@@ -120,6 +120,26 @@ export const projectsData: Project[] = [
       { label: "Views Generated", value: "2.5M" }
     ],
     videoUrl: "/videos/Cosmetic serum beauty ad.mp4"
+  },
+  {
+    id: "luxury-bag-ad",
+    title: "Maison Aurelle Luna Bag",
+    category: "Luxury Fashion Commercial + Hypermotion",
+    tagline: "Maison Aurelle Luna Bag. Italian Leather • Handcrafted Luxury.",
+    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1200&q=80",
+    challenge: "High-end fashion commercial production requires expensive set designs, location permits, styling crews, and model bookings.",
+    solution: "We generated a cinematic hypermotion sequence blending Italian leather folds of the Luna Bag with natural outdoor environment physics and motion tracking.",
+    results: [
+      "Production costs reduced by over 88%.",
+      "Creative execution completed in 4 business days.",
+      "2.8x higher CTR on premium fashion channels."
+    ],
+    metrics: [
+      { label: "Cost Saved", value: "88%" },
+      { label: "CTR Boost", value: "2.8x" },
+      { label: "Production Time", value: "4 Days" }
+    ],
+    videoUrl: "/videos/Luxury bag ad.mp4"
   }
 ];
 
@@ -243,58 +263,104 @@ export const testimonialsData: Testimonial[] = [
   }
 ];
 
-export const pricingPlans: PricingPlan[] = [
+export const pricingServices: PricingPlan[] = [
   {
-    id: "starter",
-    name: "Starter Creative",
-    price: "$2,450",
-    billing: "per project",
-    description: "Perfect for startups and product launches needing high-quality modern visual assets fast.",
+    id: "service-logo",
+    name: "Logo & Brand Design",
+    price: "$80",
+    billing: "per brand",
+    description: "Memorable, modern visual identity, logo marks, and branding guidelines that command authority.",
     features: [
-      "Custom Logo & Brand Identity Pack",
-      "3 High-fidelity AI UGC Ad assets",
-      "5 Graphic Design Assets (Posters/Marketing)",
-      "Standard brand book guidelines",
-      "7 business days turnaround"
+      "Custom unique vector logo marks",
+      "Curated brand typography & color system",
+      "High-res source files (.SVG, .AI, .PNG)",
+      "Favicon & social avatars package",
+      "3 business days turnaround"
     ],
-    ctaText: "Choose Starter Plan"
+    ctaText: "Order Logo Design"
   },
   {
-    id: "growth",
-    name: "Growth Scale",
-    price: "$4,850",
-    billing: "per project",
-    description: "Complete design and ad launch program for high-growth brands seeking high conversion rates.",
+    id: "service-poster",
+    name: "Poster Design",
+    price: "$70",
+    billing: "per design",
+    description: "Premium visual assets designed to capture attention and communicate brand authority across digital and print.",
     features: [
-      "Comprehensive Brand Identity & Guidelines",
-      "Custom responsive Next.js landing page",
-      "10 Cinematic AI Product Commercials",
-      "15 Custom Motion & Graphic designs",
-      "Awwwards-level interactive micro-effects",
+      "Cinematic digital & print posters",
+      "Social media campaign graphics",
+      "Marketing banners & display designs",
+      "Multiple standard crop variations",
+      "3 business days turnaround"
+    ],
+    ctaText: "Order Poster Design"
+  },
+  {
+    id: "service-web",
+    name: "Website Dev & Landing Pages",
+    price: "$250",
+    billing: "per project",
+    description: "Custom, responsive Awwwards-quality websites engineered with performance and micro-animations.",
+    features: [
+      "Custom responsive Next.js layout",
+      "Modern Framer Motion micro-interactions",
+      "Headless CMS integration option",
+      "Advanced SEO & fast speed load times",
+      "1-Month post-launch engineering support"
+    ],
+    ctaText: "Order Website Dev"
+  },
+  {
+    id: "service-ads",
+    name: "AI Ads Production",
+    price: "$120",
+    billing: "per video ad",
+    description: "Cinematic, high-converting product videos and synthetic UGC creator advertisements.",
+    features: [
+      "Ultra-realistic 4K generative AI video",
+      "Narrator voiceovers in 30+ languages",
+      "Vertical (9:16) & Landscape (16:9) formats",
+      "Social media optimized ad splits",
+      "3 business days turnaround"
+    ],
+    ctaText: "Order AI Video Ad"
+  }
+];
+
+export const pricingPackages: PricingPlan[] = [
+  {
+    id: "package-basic",
+    name: "Basic Package",
+    price: "$399",
+    billing: "per project",
+    description: "A comprehensive starter bundle containing 1 of each of our core design and production services.",
+    features: [
+      "1 Custom Logo & Brand Identity System",
+      "1 High-res Digital Poster Design",
+      "1 Custom responsive Next.js Landing Page",
+      "1 Cinematic 4K AI Video Ad / UGC asset",
+      "7 business days turnaround"
+    ],
+    ctaText: "Choose Basic Package"
+  },
+  {
+    id: "package-growth",
+    name: "Growth Suite",
+    price: "$799",
+    billing: "per project",
+    description: "Scale your design presence with multiple creative variants and full platform assets.",
+    features: [
+      "2 Custom Logo Identity Options",
+      "3 Poster / Marketing Banner layouts",
+      "Multi-page Next.js web application",
+      "3 Cinematic AI Video Ads / UGC spots",
       "14 business days turnaround"
     ],
-    ctaText: "Choose Growth Plan",
+    ctaText: "Choose Growth Suite",
     popular: true
   },
   {
-    id: "premium",
-    name: "Premium Studio",
-    price: "$8,950",
-    billing: "per project",
-    description: "The ultimate digital makeover. Combining custom 3D web experience with premium campaign productions.",
-    features: [
-      "Complete Brand Suite & Animated Logos",
-      "Custom 3D WebGL Multi-page Web System",
-      "Full Cinematic AI Commercial Launch Pack (30+ ads)",
-      "Unlimited Graphic/Content creation support for 1 month",
-      "Dedicated creative director & Slack channel",
-      "Prioritized delivery pipeline"
-    ],
-    ctaText: "Choose Premium Plan"
-  },
-  {
-    id: "custom",
-    name: "Enterprise Studio",
+    id: "package-custom",
+    name: "Enterprise Custom",
     price: "Custom",
     billing: "tailored scope",
     description: "Retainer-based and custom production contracts for corporations and agencies.",
@@ -308,6 +374,8 @@ export const pricingPlans: PricingPlan[] = [
     ctaText: "Contact for Pricing"
   }
 ];
+
+export const pricingPlans = pricingPackages;
 
 export const faqData: FAQItem[] = [
   {

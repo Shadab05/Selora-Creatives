@@ -9,47 +9,81 @@ import confetti from "canvas-confetti";
 function ContactFormContent() {
   const searchParams = useSearchParams();
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [currency, setCurrency] = useState<"USD" | "INR" | "CAD">("USD");
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     businessName: "",
-    projectType: "branding",
-    budget: "$2,500 - $5,000",
+    projectType: "ai-ads",
+    budget: "Under $200",
     message: ""
   });
+
+  const getBudgetOptions = () => {
+    if (currency === "INR") {
+      return ["Under ₹10,000", "₹10,000 - ₹25,000", "₹25,000 - ₹60,000", "₹60,000+"];
+    }
+    if (currency === "CAD") {
+      return ["Under C$300", "C$300 - C$750", "C$750 - C$2,000", "C$2,000+"];
+    }
+    return ["Under $200", "$200 - $500", "$500 - $1,500", "$1,500+"];
+  };
+
+  // Sync budget option default on currency switch (only if not pre-filled)
+  useEffect(() => {
+    const isPrefilled = searchParams.get("budget") || searchParams.get("plan");
+    if (!isPrefilled) {
+      setFormData((prev) => ({ ...prev, budget: getBudgetOptions()[1] }));
+    }
+  }, [currency]);
 
   // Pre-fill form from query params
   useEffect(() => {
     const plan = searchParams.get("plan");
     const service = searchParams.get("service");
     const budgetParam = searchParams.get("budget");
-    const currencyParam = searchParams.get("currency") || "USD";
+    const currencyParam = (searchParams.get("currency") as "USD" | "INR" | "CAD") || "USD";
     const logoParam = searchParams.get("logo") === "true";
+    const posterParam = searchParams.get("poster") === "true";
     const webParam = searchParams.get("web") === "true";
     const adsParam = parseInt(searchParams.get("ads") || "0");
     const retainerParam = parseInt(searchParams.get("retainer") || "0");
 
-    let updatedType = "branding";
-    let updatedBudget = "$2,500 - $5,000";
+    if (currencyParam && ["USD", "INR", "CAD"].includes(currencyParam)) {
+      setCurrency(currencyParam);
+    }
+
+    let updatedType = "ai-ads";
+    let updatedBudget = "Under $200";
     let updatedMsg = "";
 
     const symbol = currencyParam === "INR" ? "₹" : currencyParam === "CAD" ? "C$" : "$";
 
     if (plan) {
-      if (plan === "starter") {
-        updatedType = "branding";
-        updatedBudget = currencyParam === "INR" ? "Under ₹1,99,000" : currencyParam === "CAD" ? "Under C$3,350" : "Under $2,500";
-      } else if (plan === "growth") {
-        updatedType = "website";
-        updatedBudget = currencyParam === "INR" ? "₹1,99,000 - ₹3,99,000" : currencyParam === "CAD" ? "C$3,350 - C$6,650" : "$2,500 - $5,000";
-      } else if (plan === "premium") {
-        updatedType = "website";
-        updatedBudget = currencyParam === "INR" ? "₹3,99,000 - ₹7,49,000" : currencyParam === "CAD" ? "C$6,650 - C$12,250" : "$5,000 - $10,000";
+      if (plan === "service-logo") {
+        updatedType = "logo-design";
+        updatedBudget = currencyParam === "INR" ? "Under ₹10,000" : currencyParam === "CAD" ? "Under C$300" : "Under $200";
+      } else if (plan === "service-poster") {
+        updatedType = "poster-design";
+        updatedBudget = currencyParam === "INR" ? "Under ₹10,000" : currencyParam === "CAD" ? "Under C$300" : "Under $200";
+      } else if (plan === "service-web") {
+        updatedType = "web-design";
+        updatedBudget = currencyParam === "INR" ? "₹10,000 - ₹25,000" : currencyParam === "CAD" ? "C$300 - C$750" : "$200 - $500";
+      } else if (plan === "service-ads") {
+        updatedType = "ai-ads";
+        updatedBudget = currencyParam === "INR" ? "Under ₹10,000" : currencyParam === "CAD" ? "Under C$300" : "Under $200";
+      } else if (plan === "package-basic") {
+        updatedType = "ai-ads";
+        updatedBudget = currencyParam === "INR" ? "₹10,000 - ₹25,000" : currencyParam === "CAD" ? "C$300 - C$750" : "$200 - $500";
+      } else if (plan === "package-growth") {
+        updatedType = "web-design";
+        updatedBudget = currencyParam === "INR" ? "₹25,000 - ₹60,000" : currencyParam === "CAD" ? "C$750 - C$2,000" : "$500 - $1,500";
       } else {
-        updatedType = "retainer";
-        updatedBudget = "Core Retainer Contract";
+        updatedType = "namewise";
+        updatedBudget = "Custom";
       }
-      updatedMsg = `Hi Selora, I would like to inquire about the ${plan.toUpperCase()} project plan package (currency: ${currencyParam}).`;
+      updatedMsg = `Hi Selora, I would like to inquire about the ${plan.toUpperCase()} plan (currency: ${currencyParam}).`;
     } else if (service) {
       updatedType = service;
       updatedMsg = `Hi Selora, I am interested in your ${service.toUpperCase()} capabilities.`;
@@ -57,24 +91,25 @@ function ContactFormContent() {
       const budgetNum = parseFloat(budgetParam);
       
       if (currencyParam === "INR") {
-        if (budgetNum < 200000) updatedBudget = "Under ₹1,99,000";
-        else if (budgetNum <= 400000) updatedBudget = "₹1,99,000 - ₹3,99,000";
-        else if (budgetNum <= 800000) updatedBudget = "₹3,99,000 - ₹7,49,000";
-        else updatedBudget = "₹7,49,000+";
+        if (budgetNum < 10000) updatedBudget = "Under ₹10,000";
+        else if (budgetNum <= 25000) updatedBudget = "₹10,000 - ₹25,000";
+        else if (budgetNum <= 60000) updatedBudget = "₹25,000 - ₹60,000";
+        else updatedBudget = "₹60,000+";
       } else if (currencyParam === "CAD") {
-        if (budgetNum < 3500) updatedBudget = "Under C$3,350";
-        else if (budgetNum <= 7000) updatedBudget = "C$3,350 - C$6,650";
-        else if (budgetNum <= 13000) updatedBudget = "C$6,650 - C$12,250";
-        else updatedBudget = "C$12,250+";
+        if (budgetNum < 300) updatedBudget = "Under C$300";
+        else if (budgetNum <= 750) updatedBudget = "C$300 - C$750";
+        else if (budgetNum <= 2000) updatedBudget = "C$750 - C$2,000";
+        else updatedBudget = "C$2,000+";
       } else {
-        if (budgetNum < 2500) updatedBudget = "Under $2,500";
-        else if (budgetNum <= 5000) updatedBudget = "$2,500 - $5,000";
-        else if (budgetNum <= 10000) updatedBudget = "$5,000 - $10,000";
-        else updatedBudget = "10,000+";
+        if (budgetNum < 200) updatedBudget = "Under $200";
+        else if (budgetNum <= 500) updatedBudget = "$200 - $500";
+        else if (budgetNum <= 1500) updatedBudget = "$500 - $1,500";
+        else updatedBudget = "$1,500+";
       }
 
       const selectedServices = [];
       if (logoParam) selectedServices.push("Logo & Brand Identity");
+      if (posterParam) selectedServices.push("Poster & Graphic Design");
       if (webParam) selectedServices.push("Custom Next.js App");
       if (adsParam > 0) selectedServices.push(`${adsParam} AI Video Ads`);
       if (retainerParam > 0) selectedServices.push(`${retainerParam} Months Retainer Support`);
@@ -88,6 +123,22 @@ function ContactFormContent() {
       budget: updatedBudget,
       message: updatedMsg || prev.message
     }));
+  }, [searchParams]);
+
+  // Initial timezone-based currency detection
+  useEffect(() => {
+    try {
+      const isPrefilled = searchParams.get("currency");
+      if (isPrefilled) return; // let URL param override timezone
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz.includes("Asia/Calcutta") || tz.includes("Asia/Kolkata") || tz.includes("India")) {
+        setCurrency("INR");
+      } else if (tz.includes("America/Toronto") || tz.includes("America/Vancouver") || tz.includes("Canada")) {
+        setCurrency("CAD");
+      }
+    } catch (e) {
+      console.warn("Could not auto-detect timezone for regional pricing", e);
+    }
   }, [searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -108,8 +159,8 @@ function ContactFormContent() {
         name: "",
         email: "",
         businessName: "",
-        projectType: "branding",
-        budget: "$2,500 - $5,000",
+        projectType: "ai-ads",
+        budget: getBudgetOptions()[1],
         message: ""
       });
     }, 5000);
@@ -152,8 +203,8 @@ function ContactFormContent() {
             </div>
             <div>
               <p className="text-[10px] uppercase font-bold text-studioGray-400 font-heading">Direct Email</p>
-              <a href="mailto:hello@seloracreatives.com" className="text-sm font-bold text-white hover:text-accent transition-colors">
-                hello@seloracreatives.com
+              <a href="mailto:seloracreatives@gmail.com" className="text-sm font-bold text-white hover:text-accent transition-colors">
+                seloracreatives@gmail.com
               </a>
             </div>
           </div>
@@ -165,7 +216,7 @@ function ContactFormContent() {
             <div>
               <p className="text-[10px] uppercase font-bold text-studioGray-400 font-heading">Studio Location</p>
               <p className="text-sm font-bold text-white">
-                Tokyo, JP / Global Operations
+                Bhopal, India
               </p>
             </div>
           </div>
@@ -237,10 +288,31 @@ function ContactFormContent() {
                 </select>
               </div>
 
-              <div className="md:col-span-2">
-                <label className="text-xs uppercase font-bold tracking-wider text-studioGray-400 mb-2 block font-heading">Estimated Budget</label>
+              <div className="md:col-span-2 flex flex-col gap-2">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs uppercase font-bold tracking-wider text-studioGray-400 block font-heading">Estimated Budget</label>
+                  
+                  {/* Small Currency Toggle */}
+                  <div className="inline-flex bg-white/5 border border-white/10 p-0.5 rounded-full backdrop-blur-md">
+                    {(["USD", "INR", "CAD"] as const).map((curr) => (
+                      <button
+                        key={curr}
+                        type="button"
+                        onClick={() => setCurrency(curr)}
+                        className={`px-3 py-1 rounded-full font-heading text-[10px] font-bold tracking-wider transition-all duration-300 ${
+                          currency === curr
+                            ? "bg-accent text-black font-extrabold"
+                            : "text-studioGray-300 hover:text-white"
+                        }`}
+                      >
+                        {curr}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {["Under $2,500", "$2,500 - $5,000", "$5,000 - $10,000", "$10,000+"].map((bud) => (
+                  {getBudgetOptions().map((bud) => (
                     <button
                       key={bud}
                       type="button"

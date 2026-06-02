@@ -24,6 +24,8 @@ import {
   projectsData, 
   servicesData, 
   testimonialsData, 
+  pricingServices,
+  pricingPackages,
   pricingPlans, 
   faqData 
 } from "@/data/mockData";
@@ -35,7 +37,7 @@ export default function HomePage() {
   const statsSectionRef = useRef<HTMLDivElement>(null);
 
   // Showreel playback state
-  const [isPlayingReel, setIsPlayingReel] = useState(false);
+  const [isPlayingReel, setIsPlayingReel] = useState(true);
   const showreelCanvasRef = useRef<HTMLCanvasElement>(null);
   const [showreelMode, setShowreelMode] = useState(0);
   const showreelModeRef = useRef(0);
@@ -55,11 +57,14 @@ export default function HomePage() {
   const [activeAdCategory, setActiveAdCategory] = useState("ugc");
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   
-  // FAQ accordion active state
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  // FAQ active state
+  const [activeFaq, setActiveFaq] = useState<number>(0);
 
   // Currency select state
   const [currency, setCurrency] = useState<"USD" | "INR" | "CAD">("USD");
+
+  // Pricing Type (Services vs Packages) Tab State
+  const [pricingType, setPricingType] = useState<"services" | "packages">("services");
 
   // Auto-detect timezone region on load
   useEffect(() => {
@@ -77,22 +82,41 @@ export default function HomePage() {
 
   const getPlanPrice = (planId: string) => {
     if (currency === "INR") {
-      if (planId === "starter") return "₹39,999";
-      if (planId === "growth") return "₹99,999";
-      if (planId === "premium") return "₹2,49,999";
+      if (planId === "service-logo") return "₹3,999";
+      if (planId === "service-poster") return "₹3,499";
+      if (planId === "service-web") return "₹12,499";
+      if (planId === "service-ads") return "₹5,999";
+      if (planId === "package-basic") return "₹19,999";
+      if (planId === "package-growth") return "₹39,999";
       return "Custom";
     }
     if (currency === "CAD") {
-      if (planId === "starter") return "C$699";
-      if (planId === "growth") return "C$1,799";
-      if (planId === "premium") return "C$4,199";
+      if (planId === "service-logo") return "C$110";
+      if (planId === "service-poster") return "C$95";
+      if (planId === "service-web") return "C$350";
+      if (planId === "service-ads") return "C$160";
+      if (planId === "package-basic") return "C$550";
+      if (planId === "package-growth") return "C$1,100";
       return "Custom";
     }
     // Default USD
-    if (planId === "starter") return "$499";
-    if (planId === "growth") return "$1,299";
-    if (planId === "premium") return "$2,999";
+    if (planId === "service-logo") return "$80";
+    if (planId === "service-poster") return "$70";
+    if (planId === "service-web") return "$250";
+    if (planId === "service-ads") return "$120";
+    if (planId === "package-basic") return "$399";
+    if (planId === "package-growth") return "$799";
     return "Custom";
+  };
+
+  const getBudgetOptions = () => {
+    if (currency === "INR") {
+      return ["Under ₹10,000", "₹10,000 - ₹25,000", "₹25,000 - ₹60,000", "₹60,000+"];
+    }
+    if (currency === "CAD") {
+      return ["Under C$300", "C$300 - C$750", "C$750 - C$2,000", "C$2,000+"];
+    }
+    return ["Under $200", "$200 - $500", "$500 - $1,500", "$1,500+"];
   };
 
   // Contact form submission state
@@ -101,10 +125,15 @@ export default function HomePage() {
     name: "",
     email: "",
     businessName: "",
-    projectType: "branding",
-    budget: "$2,500 - $5,000",
+    projectType: "ai-ads",
+    budget: "Under $200",
     message: ""
   });
+
+  // Sync budget option default on currency switch
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, budget: getBudgetOptions()[1] }));
+  }, [currency]);
 
   // Handle stats counter animation on scroll into view
   useEffect(() => {
@@ -163,301 +192,571 @@ export default function HomePage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let width = (canvas.width = canvas.parentElement?.clientWidth || 800);
-    let height = (canvas.height = canvas.parentElement?.clientHeight || 450);
+    let width = 0;
+    let height = 0;
     let animFrame: number;
     let time = 0;
     
     let currentMode = 0;
-    let modeTimer = 0;
     let transitionGlitch = 0;
 
-    const drawShowreelMock = () => {
-      // Clear canvas
-      ctx.fillStyle = "#050508";
-      ctx.fillRect(0, 0, width, height);
+    // Interactive mouse rotation tracking
+    let rotX = 0.35;
+    let rotY = 0.45;
+    let targetRotX = 0.35;
+    let targetRotY = 0.45;
 
-      time += isPlayingReel ? 1.2 : 0.3;
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) / rect.width - 0.5;
+      const my = (e.clientY - rect.top) / rect.height - 0.5;
+      targetRotY = mx * 1.2;
+      targetRotX = my * 1.2;
+    };
 
-      // Sync with React state mode and trigger glitch on change
-      if (currentMode !== showreelModeRef.current) {
-        currentMode = showreelModeRef.current;
-        transitionGlitch = 15; // 15 frames of cyber-glitch transition
+    const handleResize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      width = canvas.clientWidth || 800;
+      height = canvas.clientHeight || 550;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+
+    const parent = canvas.parentElement;
+    if (parent) {
+      parent.addEventListener("mousemove", handleMouseMove);
+    }
+    window.addEventListener("resize", handleResize);
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const dpr = window.devicePixelRatio || 1;
+        width = entry.contentRect.width || canvas.clientWidth || 800;
+        height = entry.contentRect.height || canvas.clientHeight || 550;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
       }
+    });
+    resizeObserver.observe(canvas);
 
-      // Draw grid background
-      ctx.strokeStyle = "rgba(168, 85, 247, 0.02)";
-      ctx.lineWidth = 1;
-      const gridSize = 50;
-      for (let x = 0; x < width; x += gridSize) {
+    // 3D Matrix Rotations
+    const rotateX = (x: number, y: number, z: number, angle: number) => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return { x, y: y * cos - z * sin, z: y * sin + z * cos };
+    };
+
+    const rotateY = (x: number, y: number, z: number, angle: number) => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return { x: x * cos + z * sin, y, z: -x * sin + z * cos };
+    };
+
+    const project = (x: number, y: number, z: number) => {
+      const fov = 480;
+      let pt = rotateY(x, y, z, rotY + 0.785); // Isometric Y angle ~45 deg
+      pt = rotateX(pt.x, pt.y, pt.z, rotX + 0.615); // Isometric X angle ~35.26 deg
+      
+      const scale = (fov / (fov + pt.z + 100)) * 2.4; // 2.4x scale multiplier for larger isometric rendering
+      return {
+        x: pt.x * scale + width / 2,
+        y: pt.y * scale + height / 2 - 70, // Centered and raised to prevent bottom-edge cutoff
+        scale: scale,
+        visible: pt.z + 100 > 10
+      };
+    };
+
+    // Helper: Draw 3D Isometric Box
+    const drawIsoBox = (x: number, y: number, z: number, w: number, h: number, d: number, strokeColor: string, fillColor: string, drawGrid = false) => {
+      const verts = [
+        { x: x - w/2, y: y - h/2, z: z - d/2 }, // 0
+        { x: x + w/2, y: y - h/2, z: z - d/2 }, // 1
+        { x: x + w/2, y: y + h/2, z: z - d/2 }, // 2
+        { x: x - w/2, y: y + h/2, z: z - d/2 }, // 3
+        { x: x - w/2, y: y - h/2, z: z + d/2 }, // 4
+        { x: x + w/2, y: y - h/2, z: z + d/2 }, // 5
+        { x: x + w/2, y: y + h/2, z: z + d/2 }, // 6
+        { x: x - w/2, y: y + h/2, z: z + d/2 }  // 7
+      ];
+
+      const pts = verts.map(v => project(v.x + glitchX, v.y + glitchY, v.z));
+
+      const drawFace = (indices: number[], fill: string, stroke: string) => {
+        if (indices.some(i => !pts[i].visible)) return;
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-
-      const centerX = width / 2;
-      const centerY = height / 2;
-
-      // Vector glow settings
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = "rgba(168, 85, 247, 0.35)";
-
-      // Apply glitch offsets
-      let glitchX = 0;
-      let glitchY = 0;
-      if (transitionGlitch > 0) {
-        transitionGlitch--;
-        if (Math.random() > 0.45) {
-          glitchX = (Math.random() - 0.5) * 22;
-          glitchY = (Math.random() - 0.5) * 8;
-          ctx.fillStyle = "rgba(168, 85, 247, 0.12)";
-          ctx.fillRect(0, Math.random() * height, width, Math.random() * 40);
+        ctx.moveTo(pts[indices[0]].x, pts[indices[0]].y);
+        for (let i = 1; i < indices.length; i++) {
+          ctx.lineTo(pts[indices[i]].x, pts[indices[i]].y);
         }
-      }
-
-      // Mode 0: WEBSITE WIREFRAME DRAWING
-      if (currentMode === 0) {
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.5)";
-        ctx.lineWidth = 1.5;
-
-        const wWidth = Math.min(500, width * 0.75);
-        const wHeight = Math.min(280, height * 0.65);
-        const rx = centerX - wWidth / 2 + glitchX;
-        const ry = centerY - wHeight / 2 + glitchY;
-
-        // Window Outline
-        ctx.strokeRect(rx, ry, wWidth, wHeight);
-
-        // Header separator line
-        ctx.beginPath();
-        ctx.moveTo(rx, ry + 28);
-        ctx.lineTo(rx + wWidth, ry + 28);
-        ctx.stroke();
-
-        // Header Dots
-        ctx.fillStyle = "rgba(168, 85, 247, 0.3)";
-        for (let i = 0; i < 3; i++) {
-          ctx.beginPath();
-          ctx.arc(rx + 12 + i * 14, ry + 14, 3, 0, Math.PI * 2);
+        ctx.closePath();
+        if (fill) {
+          ctx.fillStyle = fill;
           ctx.fill();
         }
-
-        // Content Box Left (Image mock)
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-        ctx.strokeRect(rx + 20, ry + 44, wWidth * 0.38, wHeight * 0.4);
-        ctx.beginPath();
-        ctx.moveTo(rx + 20, ry + 44);
-        ctx.lineTo(rx + 20 + wWidth * 0.38, ry + 44 + wHeight * 0.4);
-        ctx.moveTo(rx + 20 + wWidth * 0.38, ry + 44);
-        ctx.lineTo(rx + 20, ry + 44 + wHeight * 0.4);
-        ctx.stroke();
-
-        // Content Lines Right (Text mock)
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-        for (let i = 0; i < 3; i++) {
-          const lineLen = wWidth * 0.42 - i * 35;
-          ctx.beginPath();
-          ctx.moveTo(rx + 20 + wWidth * 0.42, ry + 54 + i * 16);
-          ctx.lineTo(rx + 20 + wWidth * 0.42 + lineLen, ry + 54 + i * 16);
+        if (stroke) {
+          ctx.strokeStyle = stroke;
           ctx.stroke();
         }
+      };
 
-        // Bottom Section Cards
-        const progress = (time % 80) / 80;
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.35)";
-        for (let i = 0; i < 3; i++) {
-          const cardX = rx + 20 + i * (wWidth * 0.31);
-          const cardY = ry + wHeight * 0.58;
-          const cardW = wWidth * 0.27;
-          const cardH = wHeight * 0.32;
-          const scaleY = Math.max(0.08, Math.min(1, (progress * 3.5) - i));
-          ctx.strokeRect(cardX, cardY, cardW, cardH * scaleY);
+      // Draw sides to form solid shape
+      drawFace([0, 1, 2, 3], fillColor, strokeColor); // front
+      drawFace([4, 5, 6, 7], fillColor, strokeColor); // back
+      drawFace([0, 3, 7, 4], fillColor, strokeColor); // left
+      drawFace([1, 2, 6, 5], fillColor, strokeColor); // right
+      drawFace([0, 1, 5, 4], fillColor, strokeColor); // top
+      drawFace([3, 2, 6, 7], fillColor, strokeColor); // bottom
+
+      // Top surface grid
+      if (drawGrid) {
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.15)";
+        ctx.lineWidth = 0.8;
+        const gridLines = 6;
+        for (let i = 1; i < gridLines; i++) {
+          const ratio = i / gridLines;
+          const pX1 = project(verts[0].x + (verts[4].x - verts[0].x) * ratio + glitchX, verts[0].y + glitchY, verts[0].z + (verts[4].z - verts[0].z) * ratio);
+          const pX2 = project(verts[1].x + (verts[5].x - verts[1].x) * ratio + glitchX, verts[1].y + glitchY, verts[1].z + (verts[5].z - verts[1].z) * ratio);
+          if (pX1.visible && pX2.visible) {
+            ctx.beginPath();
+            ctx.moveTo(pX1.x, pX1.y);
+            ctx.lineTo(pX2.x, pX2.y);
+            ctx.stroke();
+          }
+
+          const pZ1 = project(verts[0].x + (verts[1].x - verts[0].x) * ratio + glitchX, verts[0].y + glitchY, verts[0].z + (verts[1].z - verts[0].z) * ratio);
+          const pZ2 = project(verts[4].x + (verts[5].x - verts[4].x) * ratio + glitchX, verts[4].y + glitchY, verts[4].z + (verts[5].z - verts[4].z) * ratio);
+          if (pZ1.visible && pZ2.visible) {
+            ctx.beginPath();
+            ctx.moveTo(pZ1.x, pZ1.y);
+            ctx.lineTo(pZ2.x, pZ2.y);
+            ctx.stroke();
+          }
+        }
+      }
+    };
+
+    // Helper: Draw text cube
+    const drawFloatingTextCube = (x: number, y: number, z: number, size: number, text: string, color: string) => {
+      drawIsoBox(x, y, z, size, size, size, "rgba(168, 85, 247, 0.5)", "rgba(168, 85, 247, 0.15)");
+      
+      const pt = project(x + glitchX, y + glitchY, z);
+      if (pt.visible) {
+        ctx.fillStyle = color || "#ffffff";
+        ctx.font = `bold ${Math.max(8, Math.floor(10 * pt.scale / 2.4))}px monospace`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, pt.x, pt.y);
+      }
+    };
+
+    let glitchX = 0;
+    let glitchY = 0;
+
+    const drawShowreelMock = () => {
+      // Clear canvas transparently
+      ctx.clearRect(0, 0, width, height);
+
+      time += isPlayingReel ? 1.0 : 0.25;
+
+      // Sync React mode
+      if (currentMode !== showreelModeRef.current) {
+        currentMode = showreelModeRef.current;
+        transitionGlitch = 12;
+      }
+
+      // Smooth cursor track
+      rotX += (targetRotX - rotX) * 0.05;
+      rotY += (targetRotY - rotY) * 0.05;
+
+      // Apply glitch offsets
+      glitchX = 0;
+      glitchY = 0;
+      if (transitionGlitch > 0) {
+        transitionGlitch--;
+        if (Math.random() > 0.4) {
+          glitchX = (Math.random() - 0.5) * 16;
+          glitchY = (Math.random() - 0.5) * 6;
+        }
+      }
+
+      // Bobbing Workbench Platform Y position
+      const platformY = 50 + Math.sin(time * 0.02) * 8;
+
+      // Draw active workbench platform
+      drawIsoBox(0, platformY, 0, 260, 12, 180, "rgba(168, 85, 247, 0.55)", "rgba(15, 12, 35, 0.3)", true);
+
+      // Add a slight glowing center shadow
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "rgba(168, 85, 247, 0.5)";
+
+      // MODE 0: WEBSITE DEV WORKSPACE
+      if (currentMode === 0) {
+        // Laptop base plate
+        drawIsoBox(0, platformY - 9, 10, 110, 6, 80, "rgba(168, 85, 247, 0.6)", "rgba(20, 15, 30, 0.5)");
+
+        // Slanted Screen frame
+        const screenW = 95;
+        const scrBL = project(-screenW/2, platformY - 12, -25);
+        const scrBR = project(screenW/2, platformY - 12, -25);
+        const scrTR = project(screenW/2, platformY - 67, -42);
+        const scrTL = project(-screenW/2, platformY - 67, -42);
+
+        if (scrBL.visible && scrBR.visible && scrTR.visible && scrTL.visible) {
+          ctx.beginPath();
+          ctx.moveTo(scrBL.x, scrBL.y);
+          ctx.lineTo(scrBR.x, scrBR.y);
+          ctx.lineTo(scrTR.x, scrTR.y);
+          ctx.lineTo(scrTL.x, scrTL.y);
+          ctx.closePath();
+          ctx.fillStyle = "rgba(12, 8, 20, 0.6)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(168, 85, 247, 0.75)";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Code lines rendering on the screen face
+          ctx.lineWidth = 1.5;
+          const lineCount = 8;
+          for (let i = 0; i < lineCount; i++) {
+            const ratioY = 0.15 + (i / lineCount) * 0.7;
+            const codeWidth = (screenW - 16) * (0.35 + 0.5 * Math.sin(i * 1.9 + time * 0.05));
+            
+            const ptL = project(-screenW/2 + 8, platformY - 12 + (-55) * ratioY, -25 + (-17) * ratioY);
+            const ptR = project(-screenW/2 + 8 + Math.max(10, codeWidth), platformY - 12 + (-55) * ratioY, -25 + (-17) * ratioY);
+
+            if (ptL.visible && ptR.visible) {
+              ctx.beginPath();
+              ctx.moveTo(ptL.x, ptL.y);
+              ctx.lineTo(ptR.x, ptR.y);
+              ctx.strokeStyle = i % 3 === 0 ? "rgba(168, 85, 247, 0.85)" : (i % 3 === 1 ? "rgba(255, 255, 255, 0.75)" : "rgba(192, 132, 252, 0.6)");
+              ctx.stroke();
+            }
+          }
         }
 
-        ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
-        ctx.font = "bold 9px monospace";
-        ctx.fillText("MODE_01: WEBSITE_DEV_LANDING_PAGES", rx + wWidth - 210, ry + 18);
-        ctx.fillText(`RENDERING GRID COMPONENTS... ${Math.floor(progress * 100)}%`, rx + 20, ry + wHeight - 10);
-      }
-      // Mode 1: VECTOR LOGO DESIGN MOCKUP
-      else if (currentMode === 1) {
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.5)";
-        ctx.lineWidth = 1.5;
-
-        const baseRad = 70;
-        const pulseRad = baseRad + Math.sin(time * 0.04) * 8;
-
-        // Golden circles
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
-        ctx.beginPath();
-        ctx.arc(centerX + glitchX, centerY + glitchY, baseRad, 0, Math.PI * 2);
-        ctx.arc(centerX + glitchX, centerY + glitchY, baseRad * 1.618, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Drafting lines
-        ctx.beginPath();
-        ctx.moveTo(centerX - 140 + glitchX, centerY + glitchY);
-        ctx.lineTo(centerX + 140 + glitchX, centerY + glitchY);
-        ctx.moveTo(centerX + glitchX, centerY - 140 + glitchY);
-        ctx.lineTo(centerX + glitchX, centerY + 140 + glitchY);
-        ctx.stroke();
-
-        // Geometric Initial Logo "S" curve
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.75)";
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(centerX + glitchX, centerY - 22 + glitchY, 32, Math.PI * 1.25, Math.PI * 0.25);
-        ctx.arc(centerX + glitchX, centerY + 22 + glitchY, 32, Math.PI * 0.25, Math.PI * 1.25, true);
-        ctx.stroke();
-
-        // Bezier Handles
-        const anchors = [
-          { x: centerX, y: centerY - 54 },
-          { x: centerX + 32, y: centerY - 22 },
-          { x: centerX - 32, y: centerY + 22 },
-          { x: centerX, y: centerY + 54 }
+        // Orbiting language cubes
+        const orbitAngle = time * 0.015;
+        const items = [
+          { text: "JS", color: "#f7df1e", offset: 0 },
+          { text: "TS", color: "#3178c6", offset: Math.PI / 2 },
+          { text: "CSS", color: "#38bdf8", offset: Math.PI },
+          { text: "JSX", color: "#61dafb", offset: 1.5 * Math.PI }
         ];
 
+        items.forEach((item, index) => {
+          const theta = orbitAngle + item.offset;
+          const ox = Math.cos(theta) * 90;
+          const oz = Math.sin(theta) * 90;
+          const oy = platformY - 30 + Math.sin(time * 0.04 + index) * 12;
+
+          drawFloatingTextCube(ox, oy, oz, 24, item.text, item.color);
+
+          // Connection network lines
+          const startPt = project(0, platformY - 30, -10);
+          const endPt = project(ox, oy, oz);
+          if (startPt.visible && endPt.visible) {
+            ctx.beginPath();
+            ctx.moveTo(startPt.x, startPt.y);
+            ctx.lineTo(endPt.x, endPt.y);
+            ctx.strokeStyle = "rgba(168, 85, 247, 0.2)";
+            ctx.setLineDash([3, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        });
+      }
+
+      // MODE 1: AI ADS WORKSPACE (VERTICAL SCREEN & CAMERA DECK)
+      else if (currentMode === 1) {
+        // Vertical Smartphone base shell
+        drawIsoBox(0, platformY - 48, 0, 52, 92, 8, "rgba(168, 85, 247, 0.6)", "rgba(20, 15, 30, 0.5)");
+
+        // Inner vertical video face
+        const phW = 44;
+        const phBL = project(-phW/2, platformY - 6, -5);
+        const phBR = project(phW/2, platformY - 6, -5);
+        const phTR = project(phW/2, platformY - 90, -5);
+        const phTL = project(-phW/2, platformY - 90, -5);
+
+        if (phBL.visible && phBR.visible && phTR.visible && phTL.visible) {
+          ctx.beginPath();
+          ctx.moveTo(phBL.x, phBL.y);
+          ctx.lineTo(phBR.x, phBR.y);
+          ctx.lineTo(phTR.x, phTR.y);
+          ctx.lineTo(phTL.x, phTL.y);
+          ctx.closePath();
+          ctx.fillStyle = "rgba(10, 5, 22, 0.6)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(168, 85, 247, 0.4)";
+          ctx.stroke();
+
+          // Play icon in the center
+          const pCenter = project(0, platformY - 48, -6);
+          if (pCenter.visible) {
+            ctx.beginPath();
+            const ps = 7;
+            ctx.moveTo(pCenter.x - ps/2, pCenter.y - ps);
+            ctx.lineTo(pCenter.x + ps, pCenter.y);
+            ctx.lineTo(pCenter.x - ps/2, pCenter.y + ps);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(168, 85, 247, 0.9)";
+            ctx.fill();
+          }
+
+          // Sound wave bars at bottom
+          ctx.strokeStyle = "rgba(168, 85, 247, 0.75)";
+          ctx.lineWidth = 1.5;
+          for (let i = 0; i < 5; i++) {
+            const bx = -14 + i * 7;
+            const bh = 10 + 15 * Math.sin(time * 0.08 + i) * Math.sin(time * 0.02);
+            const p1 = project(bx, platformY - 14, -6);
+            const p2 = project(bx, platformY - 14 - bh, -6);
+            if (p1.visible && p2.visible) {
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Circular waves radiating outward on base
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.1)";
+        ctx.lineWidth = 1;
+        const ringCount = 3;
+        for (let r = 0; r < ringCount; r++) {
+          const scale = 1.2 + r * 0.5 + (time * 0.005) % 0.5;
+          const rw = 52 * scale;
+          const rd = 44 * scale;
+          let prevRingPt = null;
+          for (let i = 0; i <= 24; i++) {
+            const theta = (i / 24) * Math.PI * 2;
+            const pt = project(rw * Math.cos(theta), platformY, rd * Math.sin(theta));
+            if (pt.visible) {
+              if (prevRingPt) {
+                ctx.beginPath();
+                ctx.moveTo(prevRingPt.x, prevRingPt.y);
+                ctx.lineTo(pt.x, pt.y);
+                ctx.stroke();
+              }
+              prevRingPt = pt;
+            }
+          }
+        }
+
+        // Orbiting timeline tags
+        const orbitAngle = time * 0.015;
+        const items = [
+          { text: "UGC", color: "#ffffff", offset: 0 },
+          { text: "4K", color: "#c084fc", offset: Math.PI / 2 },
+          { text: "REC", color: "#f87171", offset: Math.PI },
+          { text: "PLAY", color: "#34d399", offset: 1.5 * Math.PI }
+        ];
+
+        items.forEach((item, index) => {
+          const theta = orbitAngle + item.offset;
+          const ox = Math.cos(theta) * 90;
+          const oz = Math.sin(theta) * 90;
+          const oy = platformY - 30 + Math.sin(time * 0.04 + index) * 12;
+
+          drawFloatingTextCube(ox, oy, oz, 24, item.text, item.color);
+
+          const startPt = project(0, platformY - 48, 0);
+          const endPt = project(ox, oy, oz);
+          if (startPt.visible && endPt.visible) {
+            ctx.beginPath();
+            ctx.moveTo(startPt.x, startPt.y);
+            ctx.lineTo(endPt.x, endPt.y);
+            ctx.strokeStyle = "rgba(168, 85, 247, 0.2)";
+            ctx.setLineDash([3, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        });
+      }
+
+      // MODE 2: LOGO BEZIER GRID WORKSPACE
+      else if (currentMode === 2) {
+        // Flat drawing easel board
+        drawIsoBox(0, platformY - 8, 10, 130, 4, 90, "rgba(168, 85, 247, 0.55)", "rgba(20, 15, 30, 0.5)");
+
+        // Grid lines on the board
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.15)";
+        ctx.lineWidth = 0.8;
+        const boardY = platformY - 11;
+        
+        // Bezier curve vector drafting
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.8)";
+        ctx.lineWidth = 2;
+        let prevCurvePt = null;
+        const steps = 30;
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const x = -40 * Math.pow(1-t, 3) + 3 * (-15) * t * Math.pow(1-t, 2) + 3 * 15 * t*t * (1-t) + 40 * t*t*t;
+          const z = -20 * Math.pow(1-t, 3) + 3 * 25 * t * Math.pow(1-t, 2) + 3 * (-25) * t*t * (1-t) + 20 * t*t*t;
+          const pt = project(x, boardY, z);
+          if (pt.visible) {
+            if (prevCurvePt) {
+              ctx.beginPath();
+              ctx.moveTo(prevCurvePt.x, prevCurvePt.y);
+              ctx.lineTo(pt.x, pt.y);
+              ctx.stroke();
+            }
+            prevCurvePt = pt;
+          }
+        }
+
+        // Draw handles on Bezier ends
+        const controlPts = [
+          { x: -40, z: -20 },
+          { x: 40, z: 20 }
+        ];
         ctx.fillStyle = "#ffffff";
         ctx.strokeStyle = "rgba(168, 85, 247, 1)";
         ctx.lineWidth = 1;
-        anchors.forEach((pt) => {
-          const px = pt.x + glitchX;
-          const py = pt.y + glitchY;
-          ctx.fillRect(px - 3, py - 3, 6, 6);
-          ctx.strokeRect(px - 3, py - 3, 6, 6);
-
-          ctx.beginPath();
-          ctx.moveTo(px, py);
-          ctx.lineTo(px + Math.cos(time * 0.04) * 18, py + Math.sin(time * 0.04) * 8);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(px + Math.cos(time * 0.04) * 18, py + Math.sin(time * 0.04) * 8, 1.5, 0, Math.PI * 2);
-          ctx.fill();
+        controlPts.forEach(cp => {
+          const pt = project(cp.x, boardY, cp.z);
+          if (pt.visible) {
+            const size = 5 * pt.scale;
+            ctx.fillRect(pt.x - size/2, pt.y - size/2, size, size);
+            ctx.strokeRect(pt.x - size/2, pt.y - size/2, size, size);
+          }
         });
 
-        ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
-        ctx.font = "bold 9px monospace";
-        ctx.fillText("MODE_02: LOGO_BRANDING_IDENTITY", centerX - 180, centerY - 100);
-        ctx.fillText(`BEZIER_MATH: R=${Math.floor(pulseRad)}px`, centerX - 180, centerY + 110);
-      }
-      // Mode 2: POSTER GRAPHIC DESIGN LAYERS
-      else if (currentMode === 2) {
-        const pWidth = Math.min(200, width * 0.45);
-        const pHeight = Math.min(270, height * 0.65);
-        const rx = centerX - pWidth / 2 + glitchX;
-        const ry = centerY - pHeight / 2 + glitchY;
+        // Rotating Wireframe octahedron above board
+        const logoAngle = time * 0.02;
+        const rawVerts = [
+          { x: 0, y: -25, z: 0 },
+          { x: 0, y: 25, z: 0 },
+          { x: -25, y: 0, z: -25 },
+          { x: 25, y: 0, z: -25 },
+          { x: 25, y: 0, z: 25 },
+          { x: -25, y: 0, z: 25 }
+        ];
+        const rotatedVerts = rawVerts.map(v => {
+          const rot = rotateY(v.x, v.y, v.z, logoAngle);
+          return { x: rot.x, y: rot.y + (platformY - 50), z: rot.z };
+        });
+        const logoPts = rotatedVerts.map(v => project(v.x, v.y, v.z));
 
-        // Grid alignment bounds
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(rx - 8, ry - 8, pWidth + 16, pHeight + 16);
-
-        // Poster border
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.5)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(rx, ry, pWidth, pHeight);
-
-        // Rule of thirds grids
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
-        ctx.beginPath();
-        for (let i = 1; i <= 2; i++) {
-          ctx.moveTo(rx + (pWidth / 3) * i, ry);
-          ctx.lineTo(rx + (pWidth / 3) * i, ry + pHeight);
-          ctx.moveTo(rx, ry + (pHeight / 3) * i);
-          ctx.lineTo(rx + pWidth, ry + (pHeight / 3) * i);
-        }
-        ctx.stroke();
-
-        // Shape/Layer 1 (Parallax float)
-        const floatY = Math.sin(time * 0.035) * 12;
-        const floatX = Math.cos(time * 0.03) * 8;
-
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.25)";
-        ctx.strokeRect(rx + 15 + floatX, ry + 30 + floatY, pWidth - 30, pHeight * 0.42);
-        ctx.beginPath();
-        ctx.moveTo(rx + 15 + floatX, ry + 30 + floatY);
-        ctx.lineTo(rx + pWidth - 15 + floatX, ry + 30 + pHeight * 0.42 + floatY);
-        ctx.stroke();
-
-        // Typography box layer
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
-        ctx.strokeRect(rx + 25 - floatX * 0.4, ry + pHeight * 0.55 - floatY * 0.4, pWidth - 50, 36);
-
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.7)";
-        ctx.beginPath();
-        ctx.moveTo(rx + 35 - floatX * 0.4, ry + pHeight * 0.55 + 18 - floatY * 0.4);
-        ctx.lineTo(rx + pWidth - 35 - floatX * 0.4, ry + pHeight * 0.55 + 18 - floatY * 0.4);
-        ctx.stroke();
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
-        ctx.font = "bold 9px monospace";
-        ctx.fillText("MODE_03: POSTER_GRAPHIC_DESIGN", rx, ry - 22);
-        ctx.fillText("CANVAS_RATIO: 3:4", rx, ry + pHeight + 18);
-        ctx.fillText("LAYERS: 03", rx + pWidth - 75, ry + pHeight + 18);
-      }
-      // Mode 3: AI ADS PLAYBACK TIMELINE
-      else if (currentMode === 3) {
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.5)";
-        ctx.lineWidth = 2;
-
-        const pWidth = 130;
-        const pHeight = 240;
-        const rx = centerX - pWidth / 2 + glitchX;
-        const ry = centerY - pHeight / 2 - 10 + glitchY;
-
-        // Phone container
-        ctx.strokeRect(rx, ry, pWidth, pHeight);
-
-        // Dynamic Island
-        ctx.fillStyle = "rgba(168, 85, 247, 0.3)";
-        ctx.fillRect(rx + pWidth / 2 - 20, ry + 5, 40, 8);
-
-        // Mock Play button
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
-        ctx.beginPath();
-        ctx.moveTo(centerX - 8 + glitchX, centerY - 8 - 10 + glitchY);
-        ctx.lineTo(centerX + 12 + glitchX, centerY - 10 + glitchY);
-        ctx.lineTo(centerX - 8 + glitchX, centerY + 8 - 10 + glitchY);
-        ctx.closePath();
-        ctx.stroke();
-
-        // Play progress bar
-        const barX = rx + 12;
-        const barY = ry + pHeight - 35;
-        const barW = pWidth - 24;
-        ctx.strokeRect(barX, barY, barW, 4);
-
-        const knobX = barX + ((time * 0.4) % barW);
-        ctx.fillStyle = "rgba(168, 85, 247, 1)";
-        ctx.beginPath();
-        ctx.arc(knobX, barY + 2, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Audio waveforms below phone
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.45)";
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.85)";
         ctx.lineWidth = 1.5;
-        const waveY = centerY + 130 + glitchY;
-        const waveW = 280;
-        ctx.beginPath();
-        for (let i = 0; i < waveW; i += 6) {
-          const amp = Math.sin(i * 0.06 + time * 0.12) * 12 * Math.sin(i * 0.012 + time * 0.015);
-          ctx.moveTo(centerX - waveW / 2 + i + glitchX, waveY - amp);
-          ctx.lineTo(centerX - waveW / 2 + i + glitchX, waveY + amp);
-        }
-        ctx.stroke();
+        const drawLogoEdge = (a: number, b: number) => {
+          if (logoPts[a].visible && logoPts[b].visible) {
+            ctx.beginPath();
+            ctx.moveTo(logoPts[a].x, logoPts[a].y);
+            ctx.lineTo(logoPts[b].x, logoPts[b].y);
+            ctx.stroke();
+          }
+        };
 
-        ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
-        ctx.font = "bold 9px monospace";
-        ctx.fillText("MODE_04: AI_ADS_PRODUCTION", centerX - 160, centerY - 140);
-        ctx.fillText("RENDERING MOTION VECTORS...", centerX - 160, centerY - 126);
+        drawLogoEdge(0, 2); drawLogoEdge(0, 3); drawLogoEdge(0, 4); drawLogoEdge(0, 5);
+        drawLogoEdge(1, 2); drawLogoEdge(1, 3); drawLogoEdge(1, 4); drawLogoEdge(1, 5);
+        drawLogoEdge(2, 3); drawLogoEdge(3, 4); drawLogoEdge(4, 5); drawLogoEdge(5, 2);
+
+        // Core glow dot
+        const cPt = project(0, platformY - 50, 0);
+        if (cPt.visible) {
+          ctx.beginPath();
+          ctx.arc(cPt.x, cPt.y, 4.5 * cPt.scale, 0, Math.PI * 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+        }
+
+        // Orbiting logo cubes
+        const orbitAngle = time * 0.015;
+        const items = [
+          { text: "GRID", color: "#c084fc", offset: 0 },
+          { text: "NODE", color: "#ffffff", offset: Math.PI / 2 },
+          { text: "SVG", color: "#fb923c", offset: Math.PI },
+          { text: "PATH", color: "#60a5fa", offset: 1.5 * Math.PI }
+        ];
+
+        items.forEach((item, index) => {
+          const theta = orbitAngle + item.offset;
+          const ox = Math.cos(theta) * 90;
+          const oz = Math.sin(theta) * 90;
+          const oy = platformY - 35 + Math.sin(time * 0.04 + index) * 12;
+
+          drawFloatingTextCube(ox, oy, oz, 24, item.text, item.color);
+
+          const startPt = project(0, platformY - 50, 0);
+          const endPt = project(ox, oy, oz);
+          if (startPt.visible && endPt.visible) {
+            ctx.beginPath();
+            ctx.moveTo(startPt.x, startPt.y);
+            ctx.lineTo(endPt.x, endPt.y);
+            ctx.strokeStyle = "rgba(168, 85, 247, 0.2)";
+            ctx.setLineDash([3, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        });
+      }
+
+      // MODE 3: POSTER COMPOSITION WORKSPACE
+      else if (currentMode === 3) {
+        // Exploded layered sheets
+        const sheetW = 105;
+        const sheetD = 135;
+        
+        // Draw layers (bottom, mid, top)
+        drawIsoBox(0, platformY - 15, 0, sheetW, 2, sheetD, "rgba(168, 85, 247, 0.45)", "rgba(15, 10, 25, 0.25)");
+        drawIsoBox(0, platformY - 45, 0, sheetW, 2, sheetD, "rgba(255, 255, 255, 0.35)", "rgba(255, 255, 255, 0.02)");
+        drawIsoBox(0, platformY - 75, 0, sheetW, 2, sheetD, "rgba(168, 85, 247, 0.65)", "rgba(168, 85, 247, 0.05)");
+
+        // Details on Middle layer (Y = platformY - 45)
+        let prevCirclePt = null;
+        const midY = platformY - 46;
+        for (let i = 0; i <= 24; i++) {
+          const theta = (i / 24) * Math.PI * 2;
+          const pt = project(32 * Math.cos(theta), midY, 32 * Math.sin(theta));
+          if (pt.visible) {
+            if (prevCirclePt) {
+              ctx.beginPath();
+              ctx.moveTo(prevCirclePt.x, prevCirclePt.y);
+              ctx.lineTo(pt.x, pt.y);
+              ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+              ctx.stroke();
+            }
+            prevCirclePt = pt;
+          }
+        }
+
+        // Title header block on Top layer (Y = platformY - 75)
+        drawIsoBox(0, platformY - 76, -42, 65, 1, 14, "rgba(255, 255, 255, 0.65)", "rgba(255, 255, 255, 0.1)");
+
+        // Orbiting color swatches
+        const orbitAngle = time * 0.015;
+        const items = [
+          { text: "#A855", color: "#c084fc", offset: 0 },
+          { text: "#FFFF", color: "#ffffff", offset: Math.PI / 2 },
+          { text: "#3B82", color: "#60a5fa", offset: Math.PI },
+          { text: "#EF44", color: "#f87171", offset: 1.5 * Math.PI }
+        ];
+
+        items.forEach((item, index) => {
+          const theta = orbitAngle + item.offset;
+          const ox = Math.cos(theta) * 90;
+          const oz = Math.sin(theta) * 90;
+          const oy = platformY - 30 + Math.sin(time * 0.04 + index) * 12;
+
+          drawFloatingTextCube(ox, oy, oz, 24, item.text, item.color);
+
+          const startPt = project(0, platformY - 45, 0);
+          const endPt = project(ox, oy, oz);
+          if (startPt.visible && endPt.visible) {
+            ctx.beginPath();
+            ctx.moveTo(startPt.x, startPt.y);
+            ctx.lineTo(endPt.x, endPt.y);
+            ctx.strokeStyle = "rgba(168, 85, 247, 0.2)";
+            ctx.setLineDash([3, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        });
       }
 
       ctx.shadowBlur = 0;
@@ -466,10 +765,15 @@ export default function HomePage() {
 
     drawShowreelMock();
 
-    return () => cancelAnimationFrame(animFrame);
+    return () => {
+      if (parent) {
+        parent.removeEventListener("mousemove", handleMouseMove);
+      }
+      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
+      cancelAnimationFrame(animFrame);
+    };
   }, [isPlayingReel]);
-
-  // Form submission handler
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email) return;
@@ -489,8 +793,8 @@ export default function HomePage() {
         name: "",
         email: "",
         businessName: "",
-        projectType: "branding",
-        budget: "$2,500 - $5,000",
+        projectType: "ai-ads",
+        budget: getBudgetOptions()[1],
         message: ""
       });
     }, 4000);
@@ -585,25 +889,25 @@ export default function HomePage() {
       {/* ============================================================== */}
       {/* SECTION 2 — SHOWREEL */}
       {/* ============================================================== */}
-      <section className="py-24 px-6 relative bg-gradient-to-b from-black to-studioGray-950">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-24 px-6 relative bg-gradient-to-b from-black to-studioGray-950 overflow-hidden">
+        <div className="max-w-7xl mx-auto flex flex-col items-center">
           <div className="text-center mb-12">
             <h2 className="font-heading text-xs font-bold uppercase tracking-widest text-accent mb-3">
-              Cinematic Showreel
+              Watch Our Studio in Action
             </h2>
             <p className="font-heading text-3xl md:text-5xl font-extrabold tracking-tight">
-              Watch Our Studio in Action
+              Creative Engineering Blueprint
             </p>
           </div>
 
           {/* Interactive Service Action Blueprint Tabs */}
-          <div className="flex justify-center mb-10">
-            <div className="inline-flex bg-white/5 border border-white/10 p-1 rounded-full backdrop-blur-md">
+          <div className="flex justify-center mb-10 z-20">
+            <div className="inline-flex bg-white/5 border border-white/10 p-1.5 rounded-full backdrop-blur-md">
               {[
                 { id: 0, label: "Website Dev" },
-                { id: 1, label: "Logo Bezier Grid" },
-                { id: 2, label: "Poster Design" },
-                { id: 3, label: "AI Ads Production" }
+                { id: 1, label: "AI Ads" },
+                { id: 2, label: "Logo Design" },
+                { id: 3, label: "Poster Design" }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -620,45 +924,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative aspect-video w-full rounded-2xl border border-white/10 overflow-hidden shadow-2xl group max-w-5xl mx-auto bg-black">
-            <canvas ref={showreelCanvasRef} className="absolute inset-0 w-full h-full object-cover" />
+          {/* Clean borderless floating 3D canvas container */}
+          <div className="relative w-full max-w-4xl h-[550px] flex items-center justify-center">
+            <canvas ref={showreelCanvasRef} className="w-full h-full block opacity-100 z-10" />
             
-            {/* Ambient vignette */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
-
-            {/* Simulated overlay details when playing */}
-            {isPlayingReel && (
-              <div className="absolute inset-x-6 top-6 flex justify-between items-start text-xs font-heading font-bold text-white/50 pointer-events-none">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                  STUDIO_REEL_2026.RAW
-                </span>
-                <span>REC 4K HDR 60fps</span>
-              </div>
-            )}
-
-            {/* Click to play overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <button
-                onClick={() => setIsPlayingReel(!isPlayingReel)}
-                className="w-20 h-20 rounded-full bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-accent hover:border-accent hover:text-black hover:scale-110 transition-all duration-500 clickable shadow-xl shadow-black/40"
-                aria-label={isPlayingReel ? "Pause Showreel" : "Play Showreel"}
-              >
-                {isPlayingReel ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current translate-x-0.5" />}
-              </button>
-            </div>
-
-            <div className="absolute bottom-6 left-6 text-left pointer-events-none z-20">
-              <p className="font-heading text-xs uppercase tracking-widest font-bold text-accent mb-1">
-                {showreelMode === 0 && "Website Making (Next.js)"}
-                {showreelMode === 1 && "Logo Making (Bezier Curve)"}
-                {showreelMode === 2 && "Poster Making (Composition)"}
-                {showreelMode === 3 && "AI Ads Making (Timeline)"}
-              </p>
-              <h3 className="font-heading text-lg font-extrabold text-white">
-                {isPlayingReel ? "Simulating active workbench vectors..." : "Vector blueprint visualization"}
-              </h3>
-            </div>
+            {/* Background glowing ambient light orbs under the canvas */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-accent/5 blur-[80px] pointer-events-none z-0" />
           </div>
         </div>
       </section>
@@ -798,7 +1069,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {projectsData.map((project, index) => (
               <motion.div 
                 key={project.id}
@@ -892,7 +1163,7 @@ export default function HomePage() {
                 { id: "ugc", label: "UGC Ads" },
                 { id: "hypermotion", label: "Hypermotion Ads" },
                 { id: "unboxing", label: "Unboxing Ads" },
-                { id: "tryon", label: "Try-on Ads" }
+                { id: "luxury", label: "TV Spot Ads" }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -913,7 +1184,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto items-center">
             {/* Left: Device Mockup */}
             <div className="flex justify-center">
-              {activeAdCategory === "ugc" || activeAdCategory === "unboxing" ? (
+              {activeAdCategory === "ugc" || activeAdCategory === "unboxing" || activeAdCategory === "luxury" ? (
                 // Vertical smartphone format
                 <div className="relative w-[280px] h-[560px] rounded-[40px] border-[6px] border-studioGray-800 bg-black overflow-hidden shadow-2xl ring-1 ring-white/15">
                   {/* Phone Speaker/Camera notch */}
@@ -924,7 +1195,13 @@ export default function HomePage() {
                   {/* Video Element (lazy-loaded when tab is active) */}
                   <video
                     key={activeAdCategory}
-                    src={activeAdCategory === "ugc" ? "/videos/perfume ad.mp4" : "/videos/Cosmetic serum beauty ad.mp4"}
+                    src={
+                      activeAdCategory === "ugc" 
+                        ? "/videos/perfume ad.mp4" 
+                        : activeAdCategory === "unboxing"
+                        ? "/videos/Cosmetic serum beauty ad.mp4"
+                        : "/videos/Luxury bag ad.mp4"
+                    }
                     autoPlay
                     muted
                     loop
@@ -940,21 +1217,23 @@ export default function HomePage() {
                   <div className="absolute bottom-6 inset-x-5 z-20 text-left pointer-events-none">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center font-heading font-extrabold text-[10px] text-accent">
-                        {activeAdCategory === "ugc" ? "MD" : "VS"}
+                        {activeAdCategory === "ugc" ? "MD" : activeAdCategory === "unboxing" ? "VS" : "MA"}
                       </div>
                       <div>
                         <p className="text-[11px] font-bold text-white drop-shadow-md">
-                          {activeAdCategory === "ugc" ? "Miss Dior Perfume" : "Velora Skin Lab"}
+                          {activeAdCategory === "ugc" ? "Miss Dior Perfume" : activeAdCategory === "unboxing" ? "Velora Skin Lab" : "Maison Aurelle Luna Bag"}
                         </p>
                         <p className="text-[9px] text-accent font-bold drop-shadow-md">
-                          {activeAdCategory === "ugc" ? "UGC Campaign" : "Unboxing + Demo"}
+                          {activeAdCategory === "ugc" ? "UGC Campaign" : activeAdCategory === "unboxing" ? "Unboxing + Demo" : "Luxury Fashion + Hypermotion"}
                         </p>
                       </div>
                     </div>
                     <p className="text-[10px] text-studioGray-200 line-clamp-2 leading-relaxed drop-shadow-md">
                       {activeAdCategory === "ugc"
                         ? "Miss Dior Eau de Parfum. Discover your signature scent. Luxury review."
-                        : "Velora Skin Radiance Repair Serum. Vitamin C + Peptides. Brightens • Hydrates • Smooths."}
+                        : activeAdCategory === "unboxing"
+                        ? "Velora Skin Radiance Repair Serum. Vitamin C + Peptides. Brightens • Hydrates • Smooths."
+                        : "MAISON AURELLE LUNA BAG. Italian Leather • Handcrafted Luxury. High-fidelity product visuals."}
                     </p>
                   </div>
                 </div>
@@ -1023,56 +1302,7 @@ export default function HomePage() {
                     <div className="w-16 h-1 bg-studioGray-900 rounded-b-md absolute top-0" />
                   </div>
                 </div>
-              ) : (
-                // Try-on AR Scanner representation (Interactive wireframe grid layout)
-                <div className="relative w-[280px] h-[560px] rounded-[40px] border-[6px] border-studioGray-800 bg-[#07060a] overflow-hidden shadow-2xl ring-1 ring-white/15 flex flex-col items-center justify-center p-6 text-center">
-                  {/* Phone Speaker/Camera notch */}
-                  <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-4 rounded-full bg-studioGray-800 z-30 flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-black/40 ml-auto mr-1.5" />
-                  </div>
-                  
-                  {/* Scanning UI Grid overlay */}
-                  <div className="absolute inset-0 bg-[radial-gradient(rgba(168,85,247,0.15)_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
-
-                  {/* Scanning laser line animation */}
-                  <motion.div
-                    animate={{ y: [0, 560, 0] }}
-                    transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-                    className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent z-20 shadow-[0_0_10px_#a855f7]"
-                  />
-
-                  {/* Tech scan HUD graphics */}
-                  <div className="relative z-10 flex flex-col items-center gap-4">
-                    {/* Target scanning circle */}
-                    <div className="relative w-36 h-36 rounded-full border border-dashed border-accent/40 flex items-center justify-center animate-spin-slow mb-4">
-                      <div className="w-28 h-28 rounded-full border border-accent/20 flex items-center justify-center">
-                        <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center border border-accent">
-                          <Sparkles className="w-5 h-5 text-accent animate-pulse" />
-                        </div>
-                      </div>
-                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent" />
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent" />
-                    </div>
-
-                    <span className="text-[10px] text-accent font-bold uppercase tracking-widest animate-pulse">
-                      AR Tracking Active
-                    </span>
-                    <h4 className="font-heading text-lg font-extrabold text-white">
-                      Virtual AR Try-On
-                    </h4>
-                    <p className="text-[11px] text-studioGray-400 max-w-[200px] leading-relaxed">
-                      Fitting room camera simulation. Tracking facial keypoints, eyewear, and apparel coords.
-                    </p>
-
-                    <div className="mt-4 grid grid-cols-2 gap-2 text-left w-full max-w-[180px] border-t border-white/10 pt-4 font-mono text-[8px] text-studioGray-400">
-                      <div>FPS: <span className="text-white">60.0</span></div>
-                      <div>LATENCY: <span className="text-white">8ms</span></div>
-                      <div>POINTS: <span className="text-white">468 (3D)</span></div>
-                      <div>FIT RATE: <span className="text-accent">99.8%</span></div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              ) : null}
             </div>
 
             {/* Right: Copywriting / details */}
@@ -1081,13 +1311,13 @@ export default function HomePage() {
                 {activeAdCategory === "ugc" && "High-Converting UGC Perfume Ads"}
                 {activeAdCategory === "hypermotion" && "Hypermotion Product Commercials"}
                 {activeAdCategory === "unboxing" && "Skincare Unboxings & Product Demos"}
-                {activeAdCategory === "tryon" && "Interactive Virtual AR Try-On campaigns"}
+                {activeAdCategory === "luxury" && "Maison Aurelle: TV Spot Commercial"}
               </h3>
               <p className="text-studioGray-400 text-base leading-relaxed mb-6 font-light">
                 {activeAdCategory === "ugc" && "Establish instant trust. We script organic, platform-native reviews, cast fitting creators, and render your luxury product into the video with photorealistic precision, just like our Miss Dior campaign."}
                 {activeAdCategory === "hypermotion" && "Advanced camera paths and gravity simulations. Our Aroma Café commercial renders physical coffee beans and splash dynamics in 4K resolution at a fraction of traditional robotics cost."}
                 {activeAdCategory === "unboxing" && "Visually demonstrate textures, ingredients, and application. The Velora Skin Radiance Repair showcase displays luxury packaging, pipettes, and fluid absorption detail. Perfect for beauty and skincare."}
-                {activeAdCategory === "tryon" && "Enable customers to try on apparel, designer glasses, jewelry, or makeup right from their mobile browser. Custom WebGL face & body filters that boost customer confidence."}
+                {activeAdCategory === "luxury" && "Maison Aurelle Luna Bag. We composite the handcrafted luxury, Italian leather textures, and stitch details of the Luna Bag with physics-based sunlight reflections and fluid hypermotion paths."}
               </p>
 
               <ul className="flex flex-col gap-3">
@@ -1097,7 +1327,7 @@ export default function HomePage() {
                     {activeAdCategory === "ugc" && "Authentic, casual lifestyle lighting & review structure"}
                     {activeAdCategory === "hypermotion" && "Cinema-grade fluid, splash, and collision physics"}
                     {activeAdCategory === "unboxing" && "Macro zoom levels showcasing viscosity & absorption details"}
-                    {activeAdCategory === "tryon" && "Dynamic 3D geometry alignment with 468 facial landmark mesh"}
+                    {activeAdCategory === "luxury" && "Studio lighting and environment reflections mapping"}
                   </span>
                 </li>
                 <li className="flex items-center gap-3 text-sm text-studioGray-300">
@@ -1106,7 +1336,7 @@ export default function HomePage() {
                     {activeAdCategory === "ugc" && "Perfect hooks for TikTok, Instagram Reels, & Shorts"}
                     {activeAdCategory === "hypermotion" && "90% cheaper than high-end physical robotics setups"}
                     {activeAdCategory === "unboxing" && "Increases checkout intent by clarifying physical attributes"}
-                    {activeAdCategory === "tryon" && "Fully responsive browser-based experience (no app download)"}
+                    {activeAdCategory === "luxury" && "Advanced material physics representing grain and stitch detail"}
                   </span>
                 </li>
                 <li className="flex items-center gap-3 text-sm text-studioGray-300">
@@ -1115,7 +1345,7 @@ export default function HomePage() {
                     {activeAdCategory === "ugc" && "3.4x higher Click-Through-Rates than traditional ads"}
                     {activeAdCategory === "hypermotion" && "High-impact visual retention for social campaigns"}
                     {activeAdCategory === "unboxing" && "Establishes product transparency and high trust metrics"}
-                    {activeAdCategory === "tryon" && "Lowers e-commerce return rates by an average of 35%"}
+                    {activeAdCategory === "luxury" && "Premium content format tailored for high-fashion audiences"}
                   </span>
                 </li>
               </ul>
@@ -1217,8 +1447,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Currency Region Selector */}
-          <div className="flex justify-center mb-16">
+          {/* Selectors Bar */}
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-6 mb-16">
+            {/* Currency Region Selector */}
             <div className="inline-flex bg-white/5 border border-white/10 p-1 rounded-full backdrop-blur-md">
               {(["USD", "INR", "CAD"] as const).map((curr) => (
                 <button
@@ -1237,10 +1468,28 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
+
+            {/* Service/Package Type Tab Selector */}
+            <div className="inline-flex bg-white/5 border border-white/10 p-1 rounded-full backdrop-blur-md">
+              {(["services", "packages"] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setPricingType(type)}
+                  className={`px-5 py-2.5 rounded-full font-heading text-xs font-bold tracking-wider transition-all duration-300 ${
+                    pricingType === type
+                      ? "bg-accent text-black font-extrabold shadow-md"
+                      : "text-studioGray-300 hover:text-white"
+                  }`}
+                >
+                  {type === "services" ? "Individual Services" : "Package Bundles"}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {pricingPlans.map((plan) => (
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${pricingType === "services" ? "lg:grid-cols-4" : "lg:grid-cols-3 max-w-5xl mx-auto"} gap-8`}>
+            {(pricingType === "services" ? pricingServices : pricingPackages).map((plan) => (
               <div 
                 key={plan.id}
                 className={`glass-card p-8 rounded-2xl flex flex-col justify-between relative ${
@@ -1293,7 +1542,7 @@ export default function HomePage() {
       {/* SECTION 10 — FAQ */}
       {/* ============================================================== */}
       <section className="py-24 px-6 relative bg-gradient-to-b from-black to-studioGray-950">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="font-heading text-xs font-bold uppercase tracking-widest text-accent mb-3">
               FAQ
@@ -1303,43 +1552,86 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-4">
-            {faqData.map((faq, index) => {
-              const isOpen = activeFaq === index;
-              return (
-                <div 
-                  key={index} 
-                  className="glass-card rounded-xl overflow-hidden border border-white/5"
-                >
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {/* Left Column: Technical Questions List */}
+            <div className="lg:col-span-5 flex flex-col gap-3">
+              {faqData.map((faq, index) => {
+                const isActive = activeFaq === index;
+                return (
                   <button
-                    onClick={() => setActiveFaq(isOpen ? null : index)}
-                    className="w-full text-left p-6 flex justify-between items-center gap-4 transition-colors hover:bg-white/5"
+                    key={index}
+                    onClick={() => setActiveFaq(index)}
+                    className={`w-full text-left p-5 rounded-xl border transition-all duration-300 flex items-center gap-4 ${
+                      isActive
+                        ? "bg-white/5 border-accent text-white shadow-lg shadow-accent/5"
+                        : "bg-white/[0.02] border-white/5 text-studioGray-400 hover:border-white/20 hover:text-white hover:bg-white/[0.03]"
+                    }`}
                   >
-                    <span className="font-heading text-base md:text-lg font-bold text-white">
+                    <span className={`font-mono text-xs font-bold shrink-0 ${isActive ? "text-accent" : "text-studioGray-500"}`}>
+                      [ Q_0{index + 1} ]
+                    </span>
+                    <span className="font-heading text-sm font-bold flex-1 leading-snug">
                       {faq.question}
                     </span>
-                    <ChevronDown className={`w-5 h-5 text-accent transition-transform duration-300 ${
-                      isOpen ? "rotate-180" : ""
-                    }`} />
                   </button>
+                );
+              })}
+            </div>
 
-                  <AnimatePresence initial={false}>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <div className="p-6 pt-0 text-studioGray-400 text-sm leading-relaxed border-t border-white/5 font-light">
-                          {faq.answer}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+            {/* Right Column: Diagnostic Answer Terminal */}
+            <div className="lg:col-span-7 flex">
+              <div className="w-full glass-card rounded-2xl border border-white/10 bg-[#07060b] flex flex-col overflow-hidden relative shadow-2xl min-h-[300px]">
+                {/* Tech scan HUD grid background */}
+                <div className="absolute inset-0 bg-[radial-gradient(rgba(168,85,247,0.06)_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+
+                {/* Terminal Header */}
+                <div className="border-b border-white/10 px-5 py-3.5 bg-black/40 flex items-center justify-between z-10 select-none font-mono text-[10px] text-studioGray-500">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-accent/30 animate-pulse" />
+                    <span>SYS_ANSWER_SOLVER.EXE</span>
+                  </div>
+                  <div className="flex gap-4">
+                    <span>SECURE_CONN: OK</span>
+                    <span className="text-accent animate-pulse font-bold">STATUS: 200</span>
+                  </div>
                 </div>
-              );
-            })}
+
+                {/* Terminal Content Screen */}
+                <div className="p-6 md:p-8 flex-1 flex flex-col justify-between relative z-10">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeFaq}
+                      initial={{ opacity: 0, x: 15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -15 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="flex-1 flex flex-col justify-start"
+                    >
+                      {/* Diagnostic logs */}
+                      <div className="font-mono text-[9px] text-accent mb-6 flex flex-col gap-0.5 select-none leading-none opacity-60">
+                        <span>&gt; INITIALIZING ENCRYPTED PACKET HANDSHAKE...</span>
+                        <span>&gt; DATABASE QUERY SUCCESSFUL [BLOCK_ID: 94A2]</span>
+                        <span>&gt; STREAMING RAW STRING BUFFER:</span>
+                      </div>
+
+                      {/* Answer content */}
+                      <p className="text-studioGray-200 text-sm md:text-base leading-relaxed font-light mb-8">
+                        {faqData[activeFaq]?.answer}
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Terminal Footer details */}
+                  <div className="border-t border-white/5 pt-6 mt-8 flex flex-wrap justify-between items-center gap-4 font-mono text-[9px] text-studioGray-500 select-none">
+                    <div className="flex items-center gap-4">
+                      <div>ENCODING: <span className="text-white">UTF-8</span></div>
+                      <div>LATENCY: <span className="text-accent">4ms</span></div>
+                    </div>
+                    <div>COORDS: <span className="text-white">[FAQ_DB_{activeFaq + 1}]</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1430,7 +1722,7 @@ export default function HomePage() {
                 <div className="md:col-span-2">
                   <label className="text-xs uppercase font-bold tracking-wider text-studioGray-400 mb-2 block font-heading">Project Budget</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {["Under $2,500", "$2,500 - $5,000", "$5,000 - $10,000", "$10,000+"].map((bud) => (
+                    {getBudgetOptions().map((bud) => (
                       <button
                         key={bud}
                         type="button"

@@ -10,12 +10,13 @@ export default function Footer() {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      // Format to HH:MM:SS AM/PM
+      // Format to HH:MM:SS AM/PM explicitly for Bhopal timezone
       const formatted = now.toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: true,
+        timeZone: "Asia/Kolkata"
       });
       setLocalTime(formatted);
     };

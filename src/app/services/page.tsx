@@ -66,7 +66,7 @@ export default function ServicesPage() {
                       service.id === "web-design" ? "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&q=80" :
                       service.id === "poster-design" ? "https://images.unsplash.com/photo-1626544827763-d516dce335e2?auto=format&fit=crop&w=600&q=80" :
                       service.id === "logo-design" ? "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80" :
-                      "https://images.unsplash.com/photo-1553484771-047a44eee27f?auto=format&fit=crop&w=600&q=80"
+                      "https://images.unsplash.com/photo-1557200134-90327ee9fafa?auto=format&fit=crop&w=600&q=80"
                     }
                     alt={service.title}
                     className="w-full h-full object-cover brightness-[0.7] group-hover:brightness-[0.9] group-hover:scale-105 transition-all duration-700"

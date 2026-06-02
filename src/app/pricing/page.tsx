@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { pricingPlans } from "@/data/mockData";
+import { pricingServices, pricingPackages } from "@/data/mockData";
 import { Check, ArrowRight, DollarSign, HelpCircle, Layers, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default function PricingPage() {
   // Currency Region State
   const [currency, setCurrency] = useState<"USD" | "INR" | "CAD">("USD");
+  
+  // Pricing Type (Services vs Packages) Tab State
+  const [pricingType, setPricingType] = useState<"services" | "packages">("services");
 
   // Auto-detect timezone on mount
   useEffect(() => {
@@ -26,48 +29,60 @@ export default function PricingPage() {
 
   const getPlanPrice = (planId: string) => {
     if (currency === "INR") {
-      if (planId === "starter") return "₹39,999";
-      if (planId === "growth") return "₹99,999";
-      if (planId === "premium") return "₹2,49,999";
+      if (planId === "service-logo") return "₹3,999";
+      if (planId === "service-poster") return "₹3,499";
+      if (planId === "service-web") return "₹12,499";
+      if (planId === "service-ads") return "₹5,999";
+      if (planId === "package-basic") return "₹19,999";
+      if (planId === "package-growth") return "₹39,999";
       return "Custom";
     }
     if (currency === "CAD") {
-      if (planId === "starter") return "C$699";
-      if (planId === "growth") return "C$1,799";
-      if (planId === "premium") return "C$4,199";
+      if (planId === "service-logo") return "C$110";
+      if (planId === "service-poster") return "C$95";
+      if (planId === "service-web") return "C$350";
+      if (planId === "service-ads") return "C$160";
+      if (planId === "package-basic") return "C$550";
+      if (planId === "package-growth") return "C$1,100";
       return "Custom";
     }
     // Default USD
-    if (planId === "starter") return "$499";
-    if (planId === "growth") return "$1,299";
-    if (planId === "premium") return "$2,999";
+    if (planId === "service-logo") return "$80";
+    if (planId === "service-poster") return "$70";
+    if (planId === "service-web") return "$250";
+    if (planId === "service-ads") return "$120";
+    if (planId === "package-basic") return "$399";
+    if (planId === "package-growth") return "$799";
     return "Custom";
   };
 
   const getCalculatorRates = () => {
     if (currency === "INR") {
       return {
-        logo: 24999,
-        web: 79999,
-        ad: 7999,
-        retainer: 49999,
+        logo: 3999,
+        poster: 3499,
+        web: 12499,
+        ad: 5999,
+        retainer: 25000,
         symbol: "₹",
       };
     }
     if (currency === "CAD") {
       return {
-        logo: 399,
-        web: 1399,
-        ad: 139,
-        retainer: 819,
+        logo: 110,
+        poster: 95,
+        web: 350,
+        ad: 160,
+        retainer: 680,
         symbol: "C$",
       };
     }
     return {
-      logo: 299,
-      web: 999,
-      ad: 99,
-      retainer: 599,
+      logo: 80,
+      poster: 70,
+      web: 250,
+      ad: 120,
+      retainer: 500,
       symbol: "$",
     };
   };
@@ -76,6 +91,7 @@ export default function PricingPage() {
 
   // Calculator State
   const [hasLogo, setHasLogo] = useState(false);
+  const [hasPoster, setHasPoster] = useState(false);
   const [hasWeb, setHasWeb] = useState(false);
   const [numAds, setNumAds] = useState(0);
   const [retainerMonths, setRetainerMonths] = useState(0);
@@ -84,6 +100,7 @@ export default function PricingPage() {
   const calculateTotal = () => {
     let total = 0;
     if (hasLogo) total += rates.logo;
+    if (hasPoster) total += rates.poster;
     if (hasWeb) total += rates.web;
     total += numAds * rates.ad;
     total += retainerMonths * rates.retainer;
@@ -127,8 +144,9 @@ export default function PricingPage() {
           </motion.p>
         </div>
 
-        {/* Currency Region Selector */}
-        <div className="flex justify-start mb-16 border-b border-white/5 pb-8">
+        {/* Selectors Bar */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-16 border-b border-white/5 pb-8">
+          {/* Currency Region Selector */}
           <div className="inline-flex bg-white/5 border border-white/10 p-1 rounded-full backdrop-blur-md">
             {(["USD", "INR", "CAD"] as const).map((curr) => (
               <button
@@ -147,11 +165,29 @@ export default function PricingPage() {
               </button>
             ))}
           </div>
+
+          {/* Service/Package Type Tab Selector */}
+          <div className="inline-flex bg-white/5 border border-white/10 p-1 rounded-full backdrop-blur-md">
+            {(["services", "packages"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setPricingType(type)}
+                className={`px-5 py-2.5 rounded-full font-heading text-xs font-bold tracking-wider transition-all duration-300 ${
+                  pricingType === type
+                    ? "bg-accent text-black font-extrabold shadow-md"
+                    : "text-studioGray-300 hover:text-white"
+                }`}
+              >
+                {type === "services" ? "Individual Services" : "Package Bundles"}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
-          {pricingPlans.map((plan) => (
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${pricingType === "services" ? "lg:grid-cols-4" : "lg:grid-cols-3 max-w-5xl mx-auto"} gap-8 mb-24`}>
+          {(pricingType === "services" ? pricingServices : pricingPackages).map((plan) => (
             <div 
               key={plan.id}
               className={`glass-card p-8 rounded-3xl flex flex-col justify-between relative ${
@@ -219,7 +255,7 @@ export default function PricingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Options Panel */}
             <div className="lg:col-span-7 space-y-6">
-              {/* Option 1 */}
+              {/* Option 1: Logo */}
               <div 
                 onClick={() => setHasLogo(!hasLogo)}
                 className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex items-center justify-between ${
@@ -238,7 +274,26 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              {/* Option 2 */}
+              {/* Option 1.5: Poster */}
+              <div 
+                onClick={() => setHasPoster(!hasPoster)}
+                className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex items-center justify-between ${
+                  hasPoster 
+                    ? "bg-accent/5 border-accent text-white" 
+                    : "bg-white/5 border-white/5 text-studioGray-300 hover:border-white/20"
+                }`}
+              >
+                <div>
+                  <h4 className="font-heading text-sm font-bold">Poster & Graphic Design</h4>
+                  <p className="text-[10.5px] text-studioGray-400 font-light mt-1">Cinematic print and digital posters, graphics, and crop sizes.</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-heading font-extrabold block text-white">+{rates.symbol}{rates.poster.toLocaleString()}</span>
+                  <span className="text-[9px] text-accent uppercase font-bold">{hasPoster ? "Added" : "Add Service"}</span>
+                </div>
+              </div>
+
+              {/* Option 2: Web */}
               <div 
                 onClick={() => setHasWeb(!hasWeb)}
                 className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex items-center justify-between ${
@@ -327,7 +382,7 @@ export default function PricingPage() {
               {calculateTotal() > 0 && (
                 <div className="mt-8 pt-6 border-t border-white/5">
                   <Link
-                    href={`/contact?budget=${calculateTotal()}&currency=${currency}&logo=${hasLogo}&web=${hasWeb}&ads=${numAds}&retainer=${retainerMonths}`}
+                    href={`/contact?budget=${calculateTotal()}&currency=${currency}&logo=${hasLogo}&poster=${hasPoster}&web=${hasWeb}&ads=${numAds}&retainer=${retainerMonths}`}
                     className="w-full py-3.5 bg-accent hover:bg-accent-hover text-black font-heading font-extrabold text-xs tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     Submit Calculator Brief <ArrowRight className="w-4 h-4" />
