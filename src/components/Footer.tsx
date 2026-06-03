@@ -1,10 +1,379 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { ArrowUp, Mail } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 export default function Footer() {
+  const footerCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = footerCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let width = 200;
+    let height = 200;
+    let animFrame: number;
+    let time = 0;
+
+    // Interactive mouse rotation tracking
+    let rotX = 0.35;
+    let rotY = 0.45;
+    let targetRotX = 0.35;
+    let targetRotY = 0.45;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) / rect.width - 0.5;
+      const my = (e.clientY - rect.top) / rect.height - 0.5;
+      targetRotY = mx * 1.5;
+      targetRotX = my * 1.5;
+    };
+
+    const handleMouseLeave = () => {
+      targetRotX = 0.35;
+      targetRotY = 0.45;
+    };
+
+    canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
+
+    // 3D Matrix Rotations
+    const rotateX = (x: number, y: number, z: number, angle: number) => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return { x, y: y * cos - z * sin, z: y * sin + z * cos };
+    };
+
+    const rotateY = (x: number, y: number, z: number, angle: number) => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return { x: x * cos + z * sin, y, z: -x * sin + z * cos };
+    };
+
+    const project = (x: number, y: number, z: number) => {
+      const fov = 200;
+      let pt = rotateY(x, y, z, rotY + 0.785);
+      pt = rotateX(pt.x, pt.y, pt.z, rotX + 0.615);
+
+      const scale = (fov / (fov + pt.z + 100)) * 2.2;
+      return {
+        x: pt.x * scale + width / 2,
+        y: pt.y * scale + height / 2,
+        scale: scale,
+        visible: pt.z + 100 > 10,
+        z: pt.z
+      };
+    };
+
+    // Particles system
+    interface ExplodingParticle {
+      x: number;
+      y: number;
+      z: number;
+      vx: number;
+      vy: number;
+      vz: number;
+      life: number;
+      maxLife: number;
+      color: string;
+      size: number;
+    }
+    let particles: ExplodingParticle[] = [];
+    let clickPulse = 0;
+    interface Ripple {
+      radius: number;
+      maxRadius: number;
+      opacity: number;
+    }
+    let ripples: Ripple[] = [];
+
+    const handleCanvasClick = () => {
+      clickPulse = 20;
+      ripples.push({ radius: 10, maxRadius: 80, opacity: 1.0 });
+
+      const particleColors = ["#a855f7", "#f472b6", "#ffffff", "#e9d5ff", "#c084fc"];
+      // Explode from current center
+      for (let i = 0; i < 35; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1);
+        const speed = 1.2 + Math.random() * 2.8;
+
+        particles.push({
+          x: (Math.random() - 0.5) * 6,
+          y: (Math.random() - 0.5) * 6,
+          z: (Math.random() - 0.5) * 6,
+          vx: Math.sin(phi) * Math.cos(theta) * speed,
+          vy: Math.sin(phi) * Math.sin(theta) * speed,
+          vz: Math.cos(phi) * speed,
+          life: 0,
+          maxLife: 30 + Math.random() * 20,
+          color: particleColors[Math.floor(Math.random() * particleColors.length)],
+          size: 1.2 + Math.random() * 2.0
+        });
+      }
+    };
+
+    canvas.addEventListener("click", handleCanvasClick);
+
+    const handleResize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      width = canvas.clientWidth || 200;
+      height = canvas.clientHeight || 200;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    const drawGenerativeCore = (time: number, centerY: number) => {
+      clickPulse *= 0.93;
+
+      const latSteps = 8;
+      const lonSteps = 16;
+      const vertices: { px: number; py: number; pz: number; visible: boolean; scale: number }[][] = [];
+      const R0 = 24; // Base core radius
+
+      for (let i = 0; i <= latSteps; i++) {
+        const phi = (i / latSteps) * Math.PI - Math.PI / 2; // -pi/2 to pi/2
+        vertices[i] = [];
+        for (let j = 0; j <= lonSteps; j++) {
+          const theta = (j / lonSteps) * Math.PI * 2; // 0 to 2pi
+
+          // Generative noise wobbly wave simulation
+          const wobble = 4.0 * Math.sin(2.0 * theta + time * 0.045) * Math.cos(2.0 * phi + time * 0.035)
+                       + 1.8 * Math.cos(4.0 * theta - time * 0.06);
+
+          const r = R0 + wobble + clickPulse * 0.35;
+
+          const cx = r * Math.cos(phi) * Math.sin(theta);
+          const cy = r * Math.sin(phi);
+          const cz = r * Math.cos(phi) * Math.cos(theta);
+
+          const pt = project(cx, cy + centerY, cz);
+          vertices[i].push({
+            px: pt.x,
+            py: pt.y,
+            pz: pt.z,
+            visible: pt.visible,
+            scale: pt.scale
+          });
+        }
+      }
+
+      // Separate wireframe segments into Back (pz > 0) and Front (pz <= 0) for depth layering
+      interface WireSegment {
+        p1: { px: number; py: number; pz: number; visible: boolean };
+        p2: { px: number; py: number; pz: number; visible: boolean };
+      }
+      const backSegments: WireSegment[] = [];
+      const frontSegments: WireSegment[] = [];
+
+      for (let i = 0; i <= latSteps; i++) {
+        for (let j = 0; j < lonSteps; j++) {
+          const p1 = vertices[i][j];
+          const p2 = vertices[i][j + 1];
+          const isBackLon = (p1.pz + p2.pz) / 2 > 0;
+          const segLon = { p1, p2 };
+
+          if (isBackLon) backSegments.push(segLon);
+          else frontSegments.push(segLon);
+
+          if (i < latSteps) {
+            const p3 = vertices[i + 1][j];
+            const isBackLat = (p1.pz + p3.pz) / 2 > 0;
+            const segLat = { p1, p2: p3 };
+
+            if (isBackLat) backSegments.push(segLat);
+            else frontSegments.push(segLat);
+          }
+        }
+      }
+
+      // Draw Back Wireframe (behind the core)
+      ctx.lineWidth = 0.55;
+      ctx.strokeStyle = "rgba(168, 85, 247, 0.09)";
+      ctx.beginPath();
+      backSegments.forEach(seg => {
+        if (seg.p1.visible && seg.p2.visible) {
+          ctx.moveTo(seg.p1.px, seg.p1.py);
+          ctx.lineTo(seg.p2.px, seg.p2.py);
+        }
+      });
+      ctx.stroke();
+
+      // Draw Orbiting Rings (Viewfinder focus circles)
+      const drawOrbitRing = (radius: number, angleOffset: number, tilt: number, opacity: number) => {
+        const ringPoints: { x: number; y: number; z: number; pz: number }[] = [];
+        const ringSteps = 36;
+        for (let k = 0; k <= ringSteps; k++) {
+          const angle = (k / ringSteps) * Math.PI * 2 + time * 0.012 + angleOffset;
+          const rx = radius * Math.cos(angle);
+          const ry = radius * Math.sin(angle) * Math.sin(tilt);
+          const rz = radius * Math.sin(angle) * Math.cos(tilt);
+
+          const pt = project(rx, ry + centerY, rz);
+          ringPoints.push({ x: pt.x, y: pt.y, z: pt.z, pz: pt.z });
+        }
+
+        ctx.lineWidth = 0.85;
+        for (let k = 0; k < ringSteps; k++) {
+          const pt1 = ringPoints[k];
+          const pt2 = ringPoints[k + 1];
+          const isBack = (pt1.pz + pt2.pz) / 2 > 0;
+          ctx.strokeStyle = isBack 
+            ? `rgba(168, 85, 247, ${opacity * 0.12})`
+            : `rgba(244, 114, 182, ${opacity * 0.65})`;
+          
+          ctx.beginPath();
+          ctx.moveTo(pt1.x, pt1.y);
+          ctx.lineTo(pt2.x, pt2.y);
+          ctx.stroke();
+        }
+      };
+
+      drawOrbitRing(42, 0, 0.45, 0.7);
+      drawOrbitRing(50, Math.PI / 2, -0.6, 0.55);
+
+      // Draw Central Specular Core Disc
+      const ptCore = project(0, centerY, 0);
+      if (ptCore.visible) {
+        const baseCoreR = 14 + 1.8 * Math.sin(time * 0.04) + clickPulse * 0.25;
+        const coreR = baseCoreR * ptCore.scale;
+
+        ctx.beginPath();
+        ctx.arc(ptCore.x, ptCore.y, coreR, 0, Math.PI * 2);
+
+        const grad = ctx.createRadialGradient(
+          ptCore.x - coreR * 0.35, ptCore.y - coreR * 0.35, coreR * 0.05,
+          ptCore.x, ptCore.y, coreR
+        );
+        grad.addColorStop(0, "#ffffff"); // specular shine
+        grad.addColorStop(0.2, "#f472b6"); // pink center highlight
+        grad.addColorStop(0.65, "#a855f7"); // brand purple core
+        grad.addColorStop(1, "#3b0764"); // deep shadow boundary
+
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Core soft glowing ring outline
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = "rgba(168, 85, 247, 0.45)";
+        ctx.strokeStyle = "rgba(244, 114, 182, 0.2)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.shadowBlur = 0; // reset
+      }
+
+      // Draw Front Wireframe segments
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = "rgba(168, 85, 247, 0.42)";
+      ctx.beginPath();
+      frontSegments.forEach(seg => {
+        if (seg.p1.visible && seg.p2.visible) {
+          ctx.moveTo(seg.p1.px, seg.p1.py);
+          ctx.lineTo(seg.p2.px, seg.p2.py);
+        }
+      });
+      ctx.stroke();
+
+      // Draw glowing dots at front intersections
+      ctx.fillStyle = "#ffffff";
+      for (let i = 0; i <= latSteps; i++) {
+        for (let j = 0; j < lonSteps; j++) {
+          const pt = vertices[i][j];
+          if (pt.visible && pt.pz <= 0) {
+            const dotSize = 0.85 * pt.scale;
+            ctx.beginPath();
+            ctx.arc(pt.px, pt.py, dotSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+    };
+
+    const drawFooterCanvas = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      time += 1.0;
+
+      // Smooth cursor track
+      rotX += (targetRotX - rotX) * 0.05;
+      rotY += (targetRotY - rotY) * 0.05;
+
+      const logoY = Math.sin(time * 0.035) * 3;
+
+      // Draw wobbly wireframe orb & orbit rings
+      drawGenerativeCore(time, logoY);
+
+      // Draw & Update particles
+      particles = particles.filter(p => {
+        p.life += 1;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.z += p.vz;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.vz *= 0.96;
+
+        const pt = project(p.x, p.y + logoY, p.z);
+        if (pt.visible) {
+          const progress = p.life / p.maxLife;
+          const alpha = Math.max(0, 1 - progress);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, p.size * pt.scale, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0; // reset
+        }
+
+        return p.life < p.maxLife;
+      });
+
+      // Draw & Update ripples (3D shockwaves on X-Z plane)
+      ripples = ripples.filter(r => {
+        r.radius += 2.2;
+        r.opacity = Math.max(0, 1 - r.radius / r.maxRadius);
+
+        ctx.strokeStyle = `rgba(244, 114, 182, ${r.opacity * 0.45})`;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        
+        const rippleSteps = 36;
+        for (let k = 0; k <= rippleSteps; k++) {
+          const theta = (k / rippleSteps) * Math.PI * 2;
+          const rx = r.radius * Math.cos(theta);
+          const rz = r.radius * Math.sin(theta);
+          const pt = project(rx, logoY, rz);
+          if (pt.visible) {
+            if (k === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+          }
+        }
+        ctx.stroke();
+        return r.radius < r.maxRadius;
+      });
+
+      animFrame = requestAnimationFrame(drawFooterCanvas);
+    };
+
+    drawFooterCanvas();
+
+    return () => {
+      canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("mouseleave", handleMouseLeave);
+      canvas.removeEventListener("click", handleCanvasClick);
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animFrame);
+    };
+  }, []);
+
   const [localTime, setLocalTime] = useState("");
 
   useEffect(() => {
@@ -47,7 +416,7 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/seloracreatives/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-studioGray-300 hover:text-accent hover:bg-white/10 transition-all duration-300"
@@ -55,7 +424,7 @@ export default function Footer() {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
               </a>
               <a
-                href="https://twitter.com"
+                href="https://www.instagram.com/seloracreatives/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-studioGray-300 hover:text-accent hover:bg-white/10 transition-all duration-300"
@@ -63,7 +432,7 @@ export default function Footer() {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
               </a>
               <a
-                href="https://linkedin.com"
+                href="https://www.instagram.com/seloracreatives/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-studioGray-300 hover:text-accent hover:bg-white/10 transition-all duration-300"
@@ -71,7 +440,7 @@ export default function Footer() {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
               </a>
               <a
-                href="https://youtube.com"
+                href="https://www.instagram.com/seloracreatives/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-studioGray-300 hover:text-accent hover:bg-white/10 transition-all duration-300"
@@ -115,28 +484,9 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Newsletter */}
-          <div>
-            <h3 className="font-heading text-xs font-bold uppercase tracking-widest text-white mb-6">
-              Stay Creative
-            </h3>
-            <p className="text-studioGray-400 text-sm mb-4">
-              Get our monthly design assets and advertising trends briefing.
-            </p>
-            <form onSubmit={(e) => e.preventDefault()} className="relative">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-accent/50 transition-colors"
-                required
-              />
-              <button
-                type="submit"
-                className="absolute right-1 top-1 bottom-1 px-3 bg-accent hover:bg-accent-hover text-black rounded font-bold text-xs transition-colors flex items-center justify-center"
-              >
-                <Mail className="w-3.5 h-3.5" />
-              </button>
-            </form>
+          {/* Column 3: Interactive Logo (Border/Label Removed) */}
+          <div className="flex items-center justify-center md:justify-start">
+            <canvas ref={footerCanvasRef} className="w-[200px] h-[200px] block cursor-pointer select-none" />
           </div>
         </div>
 

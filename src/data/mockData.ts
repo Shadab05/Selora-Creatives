@@ -9,6 +9,7 @@ export interface Project {
   results: string[];
   metrics: { label: string; value: string }[];
   videoUrl?: string;
+  aspect?: "9:16" | "16:9";
 }
 
 export interface ServiceDetail {
@@ -66,7 +67,7 @@ export const projectsData: Project[] = [
     title: "Miss Dior Perfume",
     category: "AI UGC Campaign",
     tagline: "Luxury perfume UGC video ad featuring Dior Eau de Parfum. Discover your signature scent.",
-    image: "https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80",
+    image: "/images/perfume.jpg",
     challenge: "Traditional luxury branding relies on high-budget studio photography, making rapid testing of creator content cost-prohibitive. Miss Dior needed a casual review style UGC ad that retains luxury product accuracy.",
     solution: "We engineered a generative pipeline to overlay a photorealistic bottle of Miss Dior Eau de Parfum with dynamic lighting into a casual creator-style setting, driving immediate trust.",
     results: [
@@ -79,14 +80,15 @@ export const projectsData: Project[] = [
       { label: "CTR Boost", value: "+45%" },
       { label: "Ad Impressions", value: "3.2M" }
     ],
-    videoUrl: "/videos/perfume ad.mp4"
+    videoUrl: "/videos/perfume ad.mp4",
+    aspect: "9:16"
   },
   {
     id: "hypermotion-aroma-cafe",
     title: "Aroma Café Blend",
     category: "Hypermotion Commercial",
     tagline: "Cinema-grade fluid and bean physics coffee commercial. Classic strong blend.",
-    image: "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=1200&q=80",
+    image: "/images/coffee.jpg",
     challenge: "Aroma Café wanted to showcase a premium Arabica coffee blend. Traditional production with robotic camera rigs and fluid simulation studios was quoted at $60k.",
     solution: "Using custom physics-based diffusions, we rendered high-speed camera paths, liquid coffee splashes, and roasting bean collisions in cinematic 4K quality.",
     results: [
@@ -99,16 +101,17 @@ export const projectsData: Project[] = [
       { label: "Render Quality", value: "4K 60fps" },
       { label: "Production Speed", value: "3 Days" }
     ],
-    videoUrl: "/videos/coffee ad.mp4"
+    videoUrl: "/videos/coffee ad.mp4",
+    aspect: "9:16"
   },
   {
     id: "unboxing-velora-skin",
-    title: "Act+Acre Hair Mask",
+    title: "Velora Skin Serum",
     category: "Unboxing & Product Demo",
-    tagline: "Act+Acre Restorative Hair Mask — Cold Pressed Clinical Hair Care. Nourishes • Repairs • Hydrates.",
-    image: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=1200&q=80",
-    challenge: "Haircare brands require detailed close-ups to demonstrate texture, ingredient quality, and application appeal. Viscosity and consistency need to look natural to build buyer confidence.",
-    solution: "Produced an organic unboxing and texture demo showing the cold-pressed formula, smooth application, and rich hair absorption details using high-conversion scripts.",
+    tagline: "Velora Skin Radiance Repair — Vitamin C + Peptides. Brightens • Hydrates • Smooths.",
+    image: "/images/serum.jpg",
+    challenge: "Skincare brands require detailed close-ups to demonstrate texture and unboxing appeal. Velocity and viscosity need to look natural to build checkout confidence.",
+    solution: "Produced an organic unboxing demo showing texture viscosity, pipette application, and rapid skin absorption details using high-conversion scripting.",
     results: [
       "Cart abandonment rates dropped by 18% on product page.",
       "Average user session length increased by 120s.",
@@ -119,14 +122,15 @@ export const projectsData: Project[] = [
       { label: "CAC Reduction", value: "-38%" },
       { label: "Views Generated", value: "2.5M" }
     ],
-    videoUrl: "/videos/Cosmetic serum beauty ad.mp4"
+    videoUrl: "/videos/Cosmetic serum beauty ad.mp4",
+    aspect: "9:16"
   },
   {
     id: "luxury-bag-ad",
     title: "Maison Aurelle Luna Bag",
-    category: "Luxury Fashion Commercial + Hypermotion",
+    category: "Luxury Fashion Commercial",
     tagline: "Maison Aurelle Luna Bag. Italian Leather • Handcrafted Luxury.",
-    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1200&q=80",
+    image: "/images/bag.jpg",
     challenge: "High-end fashion commercial production requires expensive set designs, location permits, styling crews, and model bookings.",
     solution: "We generated a cinematic hypermotion sequence blending Italian leather folds of the Luna Bag with natural outdoor environment physics and motion tracking.",
     results: [
@@ -139,7 +143,29 @@ export const projectsData: Project[] = [
       { label: "CTR Boost", value: "2.8x" },
       { label: "Production Time", value: "4 Days" }
     ],
-    videoUrl: "/videos/Luxury bag ad.mp4"
+    videoUrl: "/videos/Luxury bag ad.mp4",
+    aspect: "9:16"
+  },
+  {
+    id: "tv-spot-aureva",
+    title: "AUREVA: Wear Your Story",
+    category: "TV Spot + Fashion Commercial",
+    tagline: "Widescreen 16:9 fashion commercial highlighting clean lines and high-fashion aesthetics.",
+    image: "/images/clothing.jpg",
+    challenge: "Producing high-fidelity fashion commercials for TV spots requires massive budgets, extensive location bookings, casting agencies, and months of post-production editing.",
+    solution: "We engineered a cinematic 16:9 widescreen fashion commercial utilizing advanced diffusion networks, blending custom textile physics with high-fashion designs.",
+    results: [
+      "Delivered a full cinema-grade 16:9 TV spot commercial in 48 hours.",
+      "Saved over 94% on traditional camera crew and location rental fees.",
+      "Engineered ultra-high fabric fidelity under customized digital lighting paths."
+    ],
+    metrics: [
+      { label: "Production Saved", value: "94%" },
+      { label: "CTR Boost", value: "+58%" },
+      { label: "Aspect Ratio", value: "16:9 TV" }
+    ],
+    videoUrl: "/videos/Clothing brand TV spot Ad.mp4",
+    aspect: "16:9"
   }
 ];
 

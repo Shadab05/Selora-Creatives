@@ -32,6 +32,50 @@ import {
 import confetti from "canvas-confetti";
 
 export default function HomePage() {
+  // Preloader state
+  const [showPreloader, setShowPreloader] = useState(true);
+  const [fadePreloader, setFadePreloader] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // Preloader progress count animation
+  useEffect(() => {
+    if (progress < 100) {
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          const next = prev + Math.floor(Math.random() * 8) + 2;
+          return next > 100 ? 100 : next;
+        });
+      }, 65);
+      return () => clearInterval(interval);
+    }
+  }, [progress]);
+
+  // Preloader fadeout trigger
+  useEffect(() => {
+    if (progress === 100) {
+      const timeout = setTimeout(() => {
+        setFadePreloader(true);
+        const hideTimeout = setTimeout(() => {
+          setShowPreloader(false);
+        }, 500);
+        return () => clearTimeout(hideTimeout);
+      }, 400);
+      return () => clearTimeout(timeout);
+    }
+  }, [progress]);
+
+  // Lock scroll while preloader is visible
+  useEffect(() => {
+    if (showPreloader) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showPreloader]);
+
   // Counter state for stats animation
   const [stats, setStats] = useState({ projects: 0, assets: 0, industries: 0, hours: 0 });
   const statsSectionRef = useRef<HTMLDivElement>(null);
@@ -62,6 +106,16 @@ export default function HomePage() {
 
   // Currency select state
   const [currency, setCurrency] = useState<"USD" | "INR" | "CAD">("USD");
+
+  // Mobile layout state for responsive capabilities sticky stack
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Pricing Type (Services vs Packages) Tab State
   const [pricingType, setPricingType] = useState<"services" | "packages">("services");
@@ -824,6 +878,36 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen">
+      {/* Dynamic Preloader Screen */}
+      <AnimatePresence>
+        {showPreloader && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className={`fixed inset-0 bg-[#020205] z-[99999] flex flex-col items-center justify-center select-none transition-opacity duration-500 ${
+              fadePreloader ? "opacity-0 pointer-events-none" : "opacity-100"
+            }`}
+          >
+            {/* Ambient Background glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-accent/5 blur-[90px] pointer-events-none" />
+
+            <div className="relative flex flex-col items-center gap-6 z-10">
+              {/* Logo text with sloshing water-fill animation */}
+              <h1 className="font-heading font-extrabold text-5xl md:text-8xl tracking-[0.22em] text-center pl-[0.22em] water-fill">
+                SELORA
+              </h1>
+
+              {/* Loader percentage metric */}
+              <div className="flex flex-col items-center gap-1.5 font-mono text-[9px] md:text-xs tracking-widest text-studioGray-500">
+                <span className="text-white font-bold">{progress}%</span>
+                <span className="text-[8px]">INITIALIZING_CREATIVE_ENGINE</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Background Particles Canvas */}
       <HeroCanvas />
 
@@ -1028,42 +1112,99 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {servicesData.map((service) => (
-              <Link
-                key={service.id}
-                href={service.id === "namewise" ? "http://localhost:5173" : `/services`}
-                target={service.id === "namewise" ? "_blank" : undefined}
-                rel={service.id === "namewise" ? "noopener noreferrer" : undefined}
-                className="glass-card p-8 rounded-2xl flex flex-col justify-between group cursor-pointer relative overflow-hidden block"
-              >
-                {/* Glow overlay */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 blur-2xl group-hover:bg-accent/15 transition-all duration-500 rounded-full" />
+          <div className="flex flex-col gap-12 max-w-5xl mx-auto relative mt-16 pb-12">
+            {servicesData.map((service, index) => {
+              const displayIndex = String(index + 1).padStart(2, '0');
+              return (
+                <div
+                  key={service.id}
+                  style={{
+                    top: isMobile ? "90px" : `${120 + index * 24}px`,
+                    zIndex: 10 + index,
+                  }}
+                  className="sticky bg-[#0b0910]/95 border border-white/10 rounded-[32px] p-8 md:p-12 shadow-2xl backdrop-blur-xl flex flex-col justify-between min-h-[420px] transition-all duration-300 hover:border-accent/30 group"
+                >
+                  {/* Book Page Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 flex-1">
+                    {/* Left Column: Brief & Explore */}
+                    <div className="md:col-span-6 flex flex-col justify-between">
+                      <div>
+                        {/* Title badge */}
+                        <div className="flex items-center gap-3 mb-6">
+                          <span className="font-heading font-extrabold text-sm text-accent/70 tracking-wider font-mono">
+                            {displayIndex} / {String(servicesData.length).padStart(2, '0')}
+                          </span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-accent/60 animate-pulse" />
+                          <span className="text-[10px] uppercase tracking-widest font-heading font-extrabold text-studioGray-450">
+                            {service.id === "namewise" ? "Platform Product" : "Creative Service"}
+                          </span>
+                        </div>
 
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-6 group-hover:bg-accent/10 group-hover:text-accent transition-all duration-300">
-                    {service.id === "ai-ads" && <Tv className="w-5 h-5" />}
-                    {service.id === "web-design" && <Smartphone className="w-5 h-5" />}
-                    {service.id === "poster-design" && <Sparkles className="w-5 h-5" />}
-                    {service.id === "logo-design" && <Layers className="w-5 h-5" />}
-                    {service.id === "namewise" && <Clock className="w-5 h-5" />}
+                        {/* Title */}
+                        <h3 className="font-heading text-2xl md:text-4xl font-extrabold text-white mb-4 group-hover:text-accent transition-colors duration-300">
+                          {service.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="text-studioGray-350 text-sm md:text-base leading-relaxed font-light mb-6">
+                          {service.description}
+                        </p>
+                      </div>
+
+                      {/* Explore Button */}
+                      <div className="mt-4">
+                        <Link
+                          href={service.id === "namewise" ? "http://localhost:5173" : `/services`}
+                          target={service.id === "namewise" ? "_blank" : undefined}
+                          rel={service.id === "namewise" ? "noopener noreferrer" : undefined}
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full font-heading text-xs font-bold uppercase tracking-wider text-white hover:bg-accent hover:text-black hover:border-accent transition-all duration-300 group/btn"
+                        >
+                          {service.id === "namewise" ? "Launch Platform" : "Explore Service"}
+                          <ArrowRight className="w-4 h-4 text-accent group-hover/btn:text-black group-hover/btn:translate-x-1 transition-all" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Spec Lists */}
+                    <div className="md:col-span-6 flex flex-col justify-between border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-8">
+                      <div className="space-y-6">
+                        {/* Capabilities List */}
+                        <div>
+                          <h4 className="text-[10px] uppercase tracking-widest font-heading font-bold text-accent mb-3">Core Focus Areas</h4>
+                          <ul className="space-y-2">
+                            {service.features.map((feat, fi) => (
+                              <li key={fi} className="flex items-start gap-2.5 text-xs text-studioGray-300">
+                                <span className="w-1.5 h-1.5 rounded-full bg-accent/40 mt-1.5 shrink-0" />
+                                <span>{feat}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Deliverables List */}
+                        <div>
+                          <h4 className="text-[10px] uppercase tracking-widest font-heading font-bold text-studioGray-500 mb-3">Deliverable Outputs</h4>
+                          <ul className="space-y-2">
+                            {service.deliverables.map((del, di) => (
+                              <li key={di} className="flex items-start gap-2.5 text-xs text-studioGray-400">
+                                <span className="w-1 h-1 rounded-full bg-studioGray-600 mt-1.5 shrink-0" />
+                                <span>{del}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Card Timeline Footer */}
+                      <div className="border-t border-white/5 pt-4 mt-6 flex justify-between items-center text-[10px] font-mono text-studioGray-500">
+                        <span>PROJECT_TIMELINE</span>
+                        <span className="text-white font-bold">{service.duration}</span>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-heading text-xl font-bold mb-3 group-hover:text-accent transition-colors duration-300">
-                    {service.title}
-                  </h3>
-                  <p className="text-studioGray-400 text-sm leading-relaxed mb-6 font-light">
-                    {service.description}
-                  </p>
                 </div>
-
-                <div className="border-t border-white/5 pt-4 mt-6 flex justify-between items-center text-xs">
-                  <span className="text-studioGray-500">Duration: {service.duration}</span>
-                  <span className="text-accent group-hover:translate-x-1.5 transition-transform duration-300 font-bold uppercase tracking-wider flex items-center gap-1">
-                    {service.id === "namewise" ? "Launch Platform" : "Explore"} <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -1099,7 +1240,7 @@ export default function HomePage() {
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.6, delay: index * 0.15 }}
                 onClick={() => setActiveVideoUrl(project.videoUrl || null)}
-                className="group relative aspect-[9/16] rounded-3xl overflow-hidden border border-white/10 bg-studioGray-950 cursor-pointer shadow-2xl hover:border-accent/40 hover:shadow-accent/5 transition-all duration-500"
+                className={`group relative ${project.aspect === "16:9" ? "md:col-span-2 aspect-[16/9]" : "aspect-[9/16]"} rounded-3xl overflow-hidden border border-white/10 bg-studioGray-950 cursor-pointer shadow-2xl hover:border-accent/40 hover:shadow-accent/5 transition-all duration-500`}
               >
                 {/* Image Cover Preview */}
                 <img
@@ -1116,7 +1257,8 @@ export default function HomePage() {
                     muted
                     loop
                     playsInline
-                    preload="none"
+                    preload="metadata"
+                    poster={project.image}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -1204,7 +1346,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto items-center">
             {/* Left: Device Mockup */}
             <div className="flex justify-center">
-              {activeAdCategory === "ugc" || activeAdCategory === "unboxing" || activeAdCategory === "luxury" ? (
+              {activeAdCategory === "ugc" || activeAdCategory === "unboxing" ? (
                 // Vertical smartphone format
                 <div className="relative w-[280px] h-[560px] rounded-[40px] border-[6px] border-studioGray-800 bg-black overflow-hidden shadow-2xl ring-1 ring-white/15">
                   {/* Phone Speaker/Camera notch */}
@@ -1218,15 +1360,18 @@ export default function HomePage() {
                     src={
                       activeAdCategory === "ugc"
                         ? "/videos/perfume ad.mp4"
-                        : activeAdCategory === "unboxing"
-                          ? "/videos/Cosmetic serum beauty ad.mp4"
-                          : "/videos/Luxury bag ad.mp4"
+                        : "/videos/Cosmetic serum beauty ad.mp4"
                     }
                     autoPlay
                     muted
                     loop
                     playsInline
                     preload="metadata"
+                    poster={
+                      activeAdCategory === "ugc"
+                        ? "/images/perfume.jpg"
+                        : "/images/serum.jpg"
+                    }
                     className="absolute inset-0 w-full h-full object-cover"
                   />
 
@@ -1237,25 +1382,66 @@ export default function HomePage() {
                   <div className="absolute bottom-6 inset-x-5 z-20 text-left pointer-events-none">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center font-heading font-extrabold text-[10px] text-accent">
-                        {activeAdCategory === "ugc" ? "MD" : activeAdCategory === "unboxing" ? "AA" : "MA"}
+                        {activeAdCategory === "ugc" ? "MD" : "VS"}
                       </div>
                       <div>
                         <p className="text-[11px] font-bold text-white drop-shadow-md">
-                          {activeAdCategory === "ugc" ? "Miss Dior Perfume" : activeAdCategory === "unboxing" ? "Act+Acre Hair Care" : "Maison Aurelle Luna Bag"}
+                          {activeAdCategory === "ugc" ? "Miss Dior Perfume" : "Velora Skin Lab"}
                         </p>
                         <p className="text-[9px] text-accent font-bold drop-shadow-md">
-                          {activeAdCategory === "ugc" ? "UGC Campaign" : activeAdCategory === "unboxing" ? "Unboxing + Demo" : "Luxury Fashion + Hypermotion"}
+                          {activeAdCategory === "ugc" ? "UGC Campaign" : "Unboxing + Demo"}
                         </p>
                       </div>
                     </div>
                     <p className="text-[10px] text-studioGray-200 line-clamp-2 leading-relaxed drop-shadow-md">
                       {activeAdCategory === "ugc"
                         ? "Miss Dior Eau de Parfum. Discover your signature scent. Luxury review."
-                        : activeAdCategory === "unboxing"
-                          ? "Act+Acre Restorative Hair Mask. Cold Pressed Clinical Hair Care. Nourishes • Repairs • Hydrates."
-                          : "MAISON AURELLE LUNA BAG. Italian Leather • Handcrafted Luxury. High-fidelity product visuals."}
+                        : "Velora Skin Radiance Repair Serum. Vitamin C + Peptides. Brightens • Hydrates • Smooths."}
                     </p>
                   </div>
+                </div>
+              ) : activeAdCategory === "luxury" ? (
+                // Widescreen Smart TV format
+                <div className="flex flex-col items-center justify-center w-full max-w-[500px]">
+                  {/* TV Screen and Bezel */}
+                  <div className="relative w-full aspect-[16/9] rounded-lg border-[10px] border-studioGray-800 bg-black overflow-hidden shadow-2xl ring-1 ring-white/10">
+                    <video
+                      key={activeAdCategory}
+                      src="/videos/Clothing brand TV spot Ad.mp4"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      poster="/images/clothing.jpg"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+
+                    {/* Dark Vignette Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10 pointer-events-none z-10" />
+
+                    {/* HUD Info */}
+                    <div className="absolute bottom-4 inset-x-4 z-20 text-left pointer-events-none">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center font-heading font-extrabold text-[8px] text-accent">
+                          AV
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-white drop-shadow-md">
+                            Aureva: Wear Your Story
+                          </p>
+                          <p className="text-[8px] text-accent font-bold drop-shadow-md">
+                            TV Spot + Fashion Commercial
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* TV Bezel base stand */}
+                  <div className="w-12 h-5 bg-studioGray-800 flex items-center justify-center relative shadow-md">
+                    <div className="absolute top-[-5px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-accent/90 shadow-[0_0_4px_rgba(168,85,247,0.85)] z-30" />
+                  </div>
+                  <div className="w-32 h-1.5 bg-studioGray-700 rounded-t-md shadow-lg" />
                 </div>
               ) : activeAdCategory === "hypermotion" ? (
                 // Laptop Mockup showing Vertical Video in the center
@@ -1295,6 +1481,7 @@ export default function HomePage() {
                         loop
                         playsInline
                         preload="metadata"
+                        poster="/images/coffee.jpg"
                         className="h-full w-auto max-h-full object-contain mx-auto"
                       />
                       {/* Ambient screen reflection vignette */}
@@ -1330,14 +1517,14 @@ export default function HomePage() {
               <h3 className="font-heading text-2xl md:text-3xl font-extrabold mb-4">
                 {activeAdCategory === "ugc" && "High-Converting UGC Perfume Ads"}
                 {activeAdCategory === "hypermotion" && "Hypermotion Product Commercials"}
-                {activeAdCategory === "unboxing" && "Haircare Unboxings & Product Demos"}
-                {activeAdCategory === "luxury" && "Maison Aurelle: TV Spot Commercial"}
+                {activeAdCategory === "unboxing" && "Skincare Unboxings & Product Demos"}
+                {activeAdCategory === "luxury" && "AUREVA: TV Spot Commercial"}
               </h3>
               <p className="text-studioGray-400 text-base leading-relaxed mb-6 font-light">
                 {activeAdCategory === "ugc" && "Establish instant trust. We script organic, platform-native reviews, cast fitting creators, and render your luxury product into the video with photorealistic precision, just like our Miss Dior campaign."}
                 {activeAdCategory === "hypermotion" && "Advanced camera paths and gravity simulations. Our Aroma Café commercial renders physical coffee beans and splash dynamics in 4K resolution at a fraction of traditional robotics cost."}
-                {activeAdCategory === "unboxing" && "Visually demonstrate textures, ingredients, and application. The Act+Acre Restorative Hair Mask showcase displays premium packaging, cream viscosity, and rich absorption detail. Perfect for beauty and haircare."}
-                {activeAdCategory === "luxury" && "Maison Aurelle Luna Bag. We composite the handcrafted luxury, Italian leather textures, and stitch details of the Luna Bag with physics-based sunlight reflections and fluid hypermotion paths."}
+                {activeAdCategory === "unboxing" && "Visually demonstrate textures, ingredients, and application. The Velora Skin Radiance Repair showcase displays luxury packaging, pipettes, and fluid absorption detail. Perfect for beauty and skincare."}
+                {activeAdCategory === "luxury" && "AUREVA Fashion Commercial. We composite photorealistic luxury garments, premium knit textures, and flowy apparel physics under high-end studio lighting and dynamic camera scrolls."}
               </p>
 
               <ul className="flex flex-col gap-3">
@@ -1356,7 +1543,7 @@ export default function HomePage() {
                     {activeAdCategory === "ugc" && "Perfect hooks for TikTok, Instagram Reels, & Shorts"}
                     {activeAdCategory === "hypermotion" && "90% cheaper than high-end physical robotics setups"}
                     {activeAdCategory === "unboxing" && "Increases checkout intent by clarifying physical attributes"}
-                    {activeAdCategory === "luxury" && "Advanced material physics representing grain and stitch detail"}
+                    {activeAdCategory === "luxury" && "Advanced fabric and material physics showing texture details"}
                   </span>
                 </li>
                 <li className="flex items-center gap-3 text-sm text-studioGray-300">
@@ -1365,7 +1552,7 @@ export default function HomePage() {
                     {activeAdCategory === "ugc" && "3.4x higher Click-Through-Rates than traditional ads"}
                     {activeAdCategory === "hypermotion" && "High-impact visual retention for social campaigns"}
                     {activeAdCategory === "unboxing" && "Establishes product transparency and high trust metrics"}
-                    {activeAdCategory === "luxury" && "Premium content format tailored for high-fashion audiences"}
+                    {activeAdCategory === "luxury" && "Premium content format tailored for TV and large screen ads"}
                   </span>
                 </li>
               </ul>
@@ -1778,29 +1965,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Fullscreen Portrait Video Modal */}
-      {activeVideoUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4">
-          <div className="absolute inset-0 cursor-pointer" onClick={() => setActiveVideoUrl(null)} />
-          <div className="relative w-full max-w-sm bg-black rounded-2xl border border-white/10 overflow-hidden shadow-2xl z-10 flex flex-col">
-            <button
-              onClick={() => setActiveVideoUrl(null)}
-              className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-accent border border-white/10 flex items-center justify-center text-white hover:text-black transition-colors duration-300"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {/* Fullscreen Video Modal */}
+      {activeVideoUrl && (() => {
+        const activeProj = projectsData.find((p) => p.videoUrl === activeVideoUrl);
+        const isLandscape = activeProj?.aspect === "16:9";
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4">
+            <div className="absolute inset-0 cursor-pointer" onClick={() => setActiveVideoUrl(null)} />
+            <div className={`relative w-full ${isLandscape ? "max-w-4xl" : "max-w-sm"} bg-black rounded-2xl border border-white/10 overflow-hidden shadow-2xl z-10 flex flex-col`}>
+              <button
+                onClick={() => setActiveVideoUrl(null)}
+                className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-accent border border-white/10 flex items-center justify-center text-white hover:text-black transition-colors duration-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            <div className="aspect-[9/16] w-full max-h-[82vh] relative">
-              <video
-                src={activeVideoUrl}
-                autoPlay
-                controls
-                className="w-full h-full object-contain bg-black"
-              />
+              <div className={`${isLandscape ? "aspect-[16/9]" : "aspect-[9/16]"} w-full max-h-[82vh] relative`}>
+                <video
+                  src={activeVideoUrl}
+                  autoPlay
+                  controls
+                  preload="auto"
+                  poster={activeProj?.image}
+                  className="w-full h-full object-contain bg-black"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

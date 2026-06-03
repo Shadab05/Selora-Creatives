@@ -76,12 +76,12 @@ export default function CustomCursor() {
       {/* Inner Dot */}
       <div
         ref={dotRef}
-        className="fixed top-0 left-0 w-1.5 h-1.5 bg-accent rounded-full pointer-events-none z-[99999] transition-transform duration-75 ease-out"
+        className="fixed top-0 left-0 w-1.5 h-1.5 bg-accent rounded-full pointer-events-none z-[99999]"
       />
       {/* Outer Ring */}
       <div
         ref={ringRef}
-        className={`fixed top-0 left-0 rounded-full pointer-events-none z-[99998] transition-all duration-300 ${
+        className={`fixed top-0 left-0 rounded-full pointer-events-none z-[99998] transition-[width,height,background-color,border-color] duration-300 ease-out ${
           isHovered
             ? "w-12 h-12 bg-accent/10 border border-accent"
             : "w-8 h-8 border border-white/30"

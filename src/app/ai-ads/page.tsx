@@ -2,70 +2,20 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { projectsData } from "@/data/mockData";
 import { 
-  Sparkles, 
   Smartphone, 
   Tv, 
   Users, 
   Play, 
-  Check, 
-  ArrowUpRight, 
-  Compass, 
   Cpu,
-  X
+  X,
+  ArrowUpRight
 } from "lucide-react";
 import Link from "next/link";
 
 export default function AIAdsPage() {
-  const [selectedCampaign, setSelectedCampaign] = useState("all");
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
-
-  const adsCategories = [
-    {
-      id: "ugc-miss-dior",
-      title: "Miss Dior Perfume",
-      category: "AI UGC Ad",
-      format: "9:16 Vertical",
-      metric: "+45% CTR",
-      tagline: "Discover your signature scent.",
-      description: "Organic, platform-native creator review featuring Miss Dior Eau de Parfum. Combines authentic home lighting with hyper-realistic product placements.",
-      image: "https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=600&q=80",
-      videoUrl: "/videos/perfume ad.mp4"
-    },
-    {
-      id: "hypermotion-coffee",
-      title: "Aroma Café Blend",
-      category: "Hypermotion Commercial",
-      format: "16:9 Landscape",
-      metric: "3.4x Higher ROAS",
-      tagline: "Classic strong blend, premium Arabica.",
-      description: "High-octane coffee bean and splash physics simulated at 60fps. Crafted to launch gourmet roasted beans without physical camera rig overhead.",
-      image: "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80",
-      videoUrl: "/videos/coffee ad.mp4"
-    },
-    {
-      id: "unboxing-velora",
-      title: "Act+Acre Hair Mask",
-      category: "Unboxing & Demo",
-      format: "9:16 Vertical",
-      metric: "+55% Conversion",
-      tagline: "Nourishes • Repairs • Hydrates.",
-      description: "Macro haircare application showcase showing unboxing dynamics, mask cream viscosity, and hair hydration texture.",
-      image: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80",
-      videoUrl: "/videos/Cosmetic serum beauty ad.mp4"
-    },
-    {
-      id: "luxury-bag-ad",
-      title: "Maison Aurelle Luna Bag",
-      category: "TV Spot Ad",
-      format: "9:16 Vertical",
-      metric: "2.8x CTR Boost",
-      tagline: "Italian Leather • Handcrafted Luxury.",
-      description: "Cinematic hypermotion sequence blending Italian leather folds of the Luna Bag with natural outdoor environment physics and motion tracking.",
-      image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=600&q=80",
-      videoUrl: "/videos/Luxury bag ad.mp4"
-    }
-  ];
 
   return (
     <div className="relative min-h-screen pt-32 pb-24 px-6">
@@ -137,105 +87,130 @@ export default function AIAdsPage() {
           </div>
         </div>
 
-        {/* Showcase items */}
+        {/* Showcase items — same cinematic card style as homepage */}
         <div className="flex flex-col gap-12">
           <h2 className="font-heading text-xl font-extrabold text-white border-b border-white/5 pb-4">
             Recent Campaign Creatives
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {adsCategories.map((ad) => (
-              <div 
-                key={ad.id} 
-                className="glass-card rounded-2xl overflow-hidden flex flex-col justify-between border border-white/5 group"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {projectsData.map((project, index) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                onClick={() => setActiveVideoUrl(project.videoUrl || null)}
+                className={`group relative ${
+                  project.aspect === "16:9"
+                    ? "md:col-span-2 aspect-[16/9]"
+                    : "aspect-[9/16]"
+                } rounded-3xl overflow-hidden border border-white/10 bg-studioGray-950 cursor-pointer shadow-2xl hover:border-accent/40 hover:shadow-accent/5 transition-all duration-500`}
               >
-                <div>
-                  <div 
-                    onClick={() => setActiveVideoUrl(ad.videoUrl)}
-                    className="relative aspect-[4/5] overflow-hidden bg-black border-b border-white/5 cursor-pointer"
-                  >
-                    <img
-                      src={ad.image}
-                      alt={ad.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-75 group-hover:brightness-90"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
-                    
-                    {/* Format Badge */}
-                    <span className="absolute top-4 left-4 bg-black/70 border border-white/10 px-3 py-1 rounded-full text-[10px] font-heading font-bold uppercase tracking-wider text-accent">
-                      {ad.format}
-                    </span>
+                {/* Image Cover */}
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:opacity-0 transition-opacity duration-500 brightness-75 z-10"
+                />
 
-                    {/* Metric Highlight */}
-                    <span className="absolute top-4 right-4 bg-accent text-black px-3 py-1 rounded-full text-[10px] font-heading font-extrabold uppercase tracking-wider">
-                      {ad.metric}
-                    </span>
+                {/* Hover Video Preview */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-black">
+                  <video
+                    src={project.videoUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    poster={project.image}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-                    {/* Simulation Play Trigger overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white backdrop-blur-md group-hover:scale-110 transition-transform duration-300">
-                        <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                {/* Dark Vignette */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-85 pointer-events-none z-20" />
+
+                {/* Card Info */}
+                <div className="absolute inset-x-6 bottom-6 z-30 flex flex-col justify-end text-left transition-transform duration-500 group-hover:translate-y-[-8px]">
+                  <span className="text-[10px] uppercase tracking-widest font-heading font-extrabold text-accent mb-2 block">
+                    {project.category}
+                  </span>
+                  <h3 className="font-heading text-xl md:text-2xl font-extrabold text-white mb-2 leading-tight">
+                    {project.title}
+                  </h3>
+                  <p className="text-studioGray-300 text-xs font-light leading-relaxed mb-4 line-clamp-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                    {project.tagline}
+                  </p>
+
+                  {/* Metrics Row */}
+                  <div className="flex gap-4 pt-4 border-t border-white/10">
+                    {project.metrics.slice(0, 2).map((metric, mi) => (
+                      <div key={mi} className="flex flex-col">
+                        <span className="font-heading text-sm font-extrabold text-white">
+                          {metric.value}
+                        </span>
+                        <span className="text-[8px] uppercase tracking-wider font-heading font-bold text-studioGray-500">
+                          {metric.label}
+                        </span>
                       </div>
-                    </div>
-
-                    {/* Floating Info inside Image */}
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <span className="text-[10px] uppercase font-heading font-bold text-accent tracking-widest block mb-1">
-                        {ad.category}
-                      </span>
-                      <h3 className="font-heading text-lg font-extrabold text-white">
-                        {ad.title}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <p className="text-studioGray-300 text-xs font-bold font-heading mb-2">
-                      {ad.tagline}
-                    </p>
-                    <p className="text-studioGray-400 text-xs leading-relaxed font-light">
-                      {ad.description}
-                    </p>
+                    ))}
                   </div>
                 </div>
 
-                <div className="p-6 border-t border-white/5 flex">
+                {/* Play Button */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30 pointer-events-none">
+                  <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center text-white hover:scale-110 transition-transform duration-300 shadow-xl">
+                    <Play className="w-6 h-6 fill-current translate-x-0.5" />
+                  </div>
+                </div>
+
+                {/* Build Similar Ad Campaign CTA */}
+                <div className="absolute bottom-0 inset-x-0 z-40 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
                   <Link
-                    href={`/contact?service=ai-ads&campaign=${ad.id}`}
-                    className="w-full text-center py-2.5 glass-button text-white font-heading font-bold text-xs tracking-wider rounded-lg flex items-center justify-center gap-1.5"
+                    href={`/contact?service=ai-ads&campaign=${project.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-black/70 border-t border-white/10 backdrop-blur-md text-white font-heading font-bold text-xs tracking-wider hover:bg-accent hover:text-black hover:border-accent transition-all duration-300"
                   >
-                    Build Similar Ad Campaign <ArrowUpRight className="w-3.5 h-3.5 text-accent" />
+                    Build Similar Ad Campaign <ArrowUpRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Fullscreen Video Modal (optimized aspect ratio sizing) */}
-      {activeVideoUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-          <div className="absolute inset-0 cursor-pointer" onClick={() => setActiveVideoUrl(null)} />
-          <div className="relative w-full max-w-4xl bg-black rounded-2xl border border-white/10 overflow-hidden shadow-2xl z-10 flex flex-col">
-            <button
-              onClick={() => setActiveVideoUrl(null)}
-              className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-accent border border-white/10 flex items-center justify-center text-white hover:text-black transition-colors duration-300"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            
-            <div className={activeVideoUrl.includes("coffee") ? "aspect-video w-full" : "aspect-[9/16] max-h-[80vh] mx-auto w-auto relative"}>
-              <video
-                src={activeVideoUrl}
-                autoPlay
-                controls
-                className="w-full h-full object-contain bg-black"
-              />
+      {/* Fullscreen Video Modal */}
+      {activeVideoUrl && (() => {
+        const activeProj = projectsData.find((p) => p.videoUrl === activeVideoUrl);
+        const isLandscape = activeProj?.aspect === "16:9";
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4">
+            <div className="absolute inset-0 cursor-pointer" onClick={() => setActiveVideoUrl(null)} />
+            <div className={`relative w-full ${isLandscape ? "max-w-4xl" : "max-w-sm"} bg-black rounded-2xl border border-white/10 overflow-hidden shadow-2xl z-10 flex flex-col`}>
+              <button
+                onClick={() => setActiveVideoUrl(null)}
+                className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-accent border border-white/10 flex items-center justify-center text-white hover:text-black transition-colors duration-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className={`${isLandscape ? "aspect-[16/9]" : "aspect-[9/16]"} w-full max-h-[82vh] relative`}>
+                <video
+                  src={activeVideoUrl}
+                  autoPlay
+                  controls
+                  preload="auto"
+                  poster={activeProj?.image}
+                  className="w-full h-full object-contain bg-black"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

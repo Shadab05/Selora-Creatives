@@ -14,6 +14,7 @@ export default function WorkPage() {
     { id: "ugc", label: "UGC Ads" },
     { id: "hypermotion", label: "Hypermotion" },
     { id: "unboxing", label: "Unboxings" },
+    { id: "tv-spot", label: "TV Spot" },
   ];
 
   // Filter projects based on selected tag
@@ -128,7 +129,7 @@ export default function WorkPage() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.5 }}
                   onClick={() => setActiveVideoUrl(project.videoUrl || null)}
-                  className="group relative aspect-[9/16] h-[55vh] md:h-[62vh] min-h-[380px] rounded-3xl overflow-hidden border border-white/10 bg-studioGray-950 cursor-pointer shadow-2xl hover:border-accent/40 hover:shadow-accent/5 transition-all duration-500 flex flex-col justify-end"
+                  className={`group relative ${project.aspect === "16:9" ? "aspect-[16/9] shrink-0" : "aspect-[9/16] shrink-0"} h-[55vh] md:h-[62vh] min-h-[380px] rounded-3xl overflow-hidden border border-white/10 bg-studioGray-950 cursor-pointer shadow-2xl hover:border-accent/40 hover:shadow-accent/5 transition-all duration-500 flex flex-col justify-end`}
                 >
                   {/* Background Image Preview */}
                   <img
@@ -145,7 +146,8 @@ export default function WorkPage() {
                       muted
                       loop
                       playsInline
-                      preload="none"
+                      preload="metadata"
+                      poster={project.image}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -202,40 +204,46 @@ export default function WorkPage() {
         </div>
       </div>
 
-      {/* Fullscreen Portrait Video Modal */}
+      {/* Fullscreen Video Modal */}
       <AnimatePresence>
-        {activeVideoUrl && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
-          >
-            <div className="absolute inset-0 cursor-pointer" onClick={() => setActiveVideoUrl(null)} />
+        {activeVideoUrl && (() => {
+          const activeProj = projectsData.find((p) => p.videoUrl === activeVideoUrl);
+          const isLandscape = activeProj?.aspect === "16:9";
+          return (
             <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-sm bg-black rounded-2xl border border-white/10 overflow-hidden shadow-2xl z-10 flex flex-col"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
             >
-              <button
-                onClick={() => setActiveVideoUrl(null)}
-                className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-accent border border-white/10 flex items-center justify-center text-white hover:text-black transition-colors duration-300"
+              <div className="absolute inset-0 cursor-pointer" onClick={() => setActiveVideoUrl(null)} />
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className={`relative w-full ${isLandscape ? "max-w-4xl" : "max-w-sm"} bg-black rounded-2xl border border-white/10 overflow-hidden shadow-2xl z-10 flex flex-col`}
               >
-                <X className="w-5 h-5" />
-              </button>
-              
-              <div className="aspect-[9/16] w-full max-h-[82vh] relative">
-                <video
-                  src={activeVideoUrl}
-                  autoPlay
-                  controls
-                  className="w-full h-full object-contain bg-black"
-                />
-              </div>
+                <button
+                  onClick={() => setActiveVideoUrl(null)}
+                  className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-accent border border-white/10 flex items-center justify-center text-white hover:text-black transition-colors duration-300"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                
+                <div className={`${isLandscape ? "aspect-[16/9]" : "aspect-[9/16]"} w-full max-h-[82vh] relative`}>
+                  <video
+                    src={activeVideoUrl}
+                    autoPlay
+                    controls
+                    preload="auto"
+                    poster={activeProj?.image}
+                    className="w-full h-full object-contain bg-black"
+                  />
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

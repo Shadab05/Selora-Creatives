@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowUpRight, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
@@ -20,6 +20,143 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
+
+  const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const hasPlayedRef = useRef(false);
+
+  // Load local intro audio and WebSpeech voices into refs
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const audio = new Audio("/audio/intro.mp3");
+    audio.onplay = () => setIsVoicePlaying(true);
+    audio.onended = () => setIsVoicePlaying(false);
+    audio.onpause = () => setIsVoicePlaying(false);
+    audioRef.current = audio;
+
+    if (window.speechSynthesis) {
+      // Pre-load voices list
+      window.speechSynthesis.getVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+      }
+    }
+
+    return () => {
+      audio.pause();
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const speakWithSynth = () => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+
+    const text = "Welcome to Selora. We engineer world-class visual assets and digital interfaces for future-focused brands. Discover our creative campaigns and launch your next high-converting production.";
+    const utterance = new SpeechSynthesisUtterance(text);
+    utteranceRef.current = utterance;
+
+    const voices = window.speechSynthesis.getVoices();
+    const targetVoices = [
+      "Google US English",
+      "Microsoft Zira",
+      "Samantha",
+      "Hazel",
+      "Victoria",
+      "Google UK English Female",
+      "en-US-SMTLocal",
+      "female"
+    ];
+
+    let chosenVoice = null;
+    for (const name of targetVoices) {
+      chosenVoice = voices.find(v => v.name.toLowerCase().includes(name.toLowerCase()));
+      if (chosenVoice) break;
+    }
+    if (!chosenVoice) {
+      chosenVoice = voices.find(v => v.name.toLowerCase().includes("female"));
+    }
+    if (chosenVoice) {
+      utterance.voice = chosenVoice;
+    }
+
+    utterance.pitch = 1.05;
+    utterance.rate = 0.90;
+    utterance.onstart = () => setIsVoicePlaying(true);
+    utterance.onend = () => setIsVoicePlaying(false);
+    utterance.onerror = () => setIsVoicePlaying(false);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Always reads from refs — no stale closure issue
+  const playVoiceIntroRef = useRef(() => {});
+  playVoiceIntroRef.current = () => {
+    if (typeof window === "undefined") return;
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play()
+        .then(() => setIsVoicePlaying(true))
+        .catch(() => speakWithSynth());
+    } else {
+      speakWithSynth();
+    }
+  };
+
+  const stopVoice = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setIsVoicePlaying(false);
+  };
+
+  const handleToggleVoice = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isVoicePlaying) {
+      stopVoice();
+      localStorage.setItem("selora_voice_muted", "true");
+    } else {
+      localStorage.removeItem("selora_voice_muted");
+      playVoiceIntroRef.current();
+    }
+  };
+
+  // Autoplay on first interaction every page load — empty [] so it attaches fresh on every mount/reload
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleFirstInteraction = () => {
+      const isMuted = localStorage.getItem("selora_voice_muted");
+      if (!isMuted && !hasPlayedRef.current) {
+        hasPlayedRef.current = true;
+        playVoiceIntroRef.current();
+      }
+      cleanupListeners();
+    };
+
+    const cleanupListeners = () => {
+      window.removeEventListener("click", handleFirstInteraction);
+      window.removeEventListener("keydown", handleFirstInteraction);
+      window.removeEventListener("touchstart", handleFirstInteraction);
+    };
+
+    window.addEventListener("click", handleFirstInteraction);
+    window.addEventListener("keydown", handleFirstInteraction);
+    window.addEventListener("touchstart", handleFirstInteraction);
+
+    return () => cleanupListeners();
+  }, []);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -74,8 +211,35 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* CTA Button */}
-        <div className="hidden md:block">
+        {/* Desktop CTA & Voice Toggle */}
+        <div className="hidden md:flex items-center gap-4">
+          <button
+            onClick={handleToggleVoice}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-heading font-extrabold uppercase tracking-wider transition-all duration-300 ${
+              isVoicePlaying
+                ? "bg-accent/10 border-accent/40 text-accent hover:bg-accent/15"
+                : "bg-white/5 border-white/10 text-studioGray-300 hover:text-white hover:border-white/20"
+            }`}
+            aria-label="Toggle Voice Intro"
+          >
+            {isVoicePlaying ? (
+              <>
+                <div className="flex gap-0.5 items-end h-3 w-4">
+                  <span className="w-[2px] bg-accent rounded-full animate-soundwave-1" />
+                  <span className="w-[2px] bg-accent rounded-full animate-soundwave-2" />
+                  <span className="w-[2px] bg-accent rounded-full animate-soundwave-3" />
+                  <span className="w-[2px] bg-accent rounded-full animate-soundwave-4" />
+                </div>
+                <span>Playing Intro</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-studioGray-450" />
+                <span>Voice Intro</span>
+              </>
+            )}
+          </button>
+
           <Link
             href="/contact"
             className="glass-button px-5 py-2.5 rounded-full font-heading text-sm font-bold flex items-center gap-1.5 text-white"
@@ -84,14 +248,36 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden text-white hover:text-accent transition-colors duration-300 relative z-50"
-          aria-label={isOpen ? "Close Menu" : "Open Menu"}
-        >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        {/* Mobile controls: Voice Toggle & Hamburger Menu */}
+        <div className="flex md:hidden items-center gap-3 relative z-50">
+          <button
+            onClick={handleToggleVoice}
+            className={`flex items-center justify-center w-9 h-9 rounded-full border transition-all duration-300 ${
+              isVoicePlaying
+                ? "bg-accent/15 border-accent text-accent"
+                : "bg-white/5 border-white/10 text-studioGray-300"
+            }`}
+            aria-label="Toggle Voice Intro"
+          >
+            {isVoicePlaying ? (
+              <div className="flex gap-0.5 items-end h-2.5 w-3">
+                <span className="w-[1.5px] bg-accent rounded-full animate-soundwave-1" />
+                <span className="w-[1.5px] bg-accent rounded-full animate-soundwave-2" />
+                <span className="w-[1.5px] bg-accent rounded-full animate-soundwave-3" />
+              </div>
+            ) : (
+              <VolumeX className="w-4 h-4" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-white hover:text-accent transition-colors duration-350"
+            aria-label={isOpen ? "Close Menu" : "Open Menu"}
+          >
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
     </header>
 

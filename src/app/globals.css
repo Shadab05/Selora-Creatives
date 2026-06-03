@@ -121,3 +121,55 @@ body {
     cursor: none;
   }
 }
+
+/* Animated sound wave bars for voice intro */
+@keyframes soundwave-high {
+  0%, 100% { height: 4px; }
+  50% { height: 12px; }
+}
+@keyframes soundwave-mid {
+  0%, 100% { height: 3px; }
+  50% { height: 10px; }
+}
+@keyframes soundwave-low {
+  0%, 100% { height: 2px; }
+  50% { height: 8px; }
+}
+
+.animate-soundwave-1 {
+  animation: soundwave-high 0.8s ease-in-out infinite;
+}
+.animate-soundwave-2 {
+  animation: soundwave-mid 0.6s ease-in-out infinite;
+  animation-delay: 0.15s;
+}
+.animate-soundwave-3 {
+  animation: soundwave-high 0.7s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+.animate-soundwave-4 {
+  animation: soundwave-low 0.9s ease-in-out infinite;
+  animation-delay: 0.05s;
+}
+
+/* Premium Preloader Water Fill Animation */
+.water-fill {
+  position: relative;
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.04); /* very faint white base */
+  background: linear-gradient(to top, #a855f7 0%, #f472b6 45%, #ffffff 80%, #a855f7 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-size: 100% 0%;
+  background-repeat: no-repeat;
+  animation: fill-water 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fill-water {
+  0% {
+    background-size: 100% 0%;
+  }
+  100% {
+    background-size: 100% 100%;
+  }
+}
