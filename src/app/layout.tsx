@@ -20,6 +20,7 @@ const bodyFont = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.seloracreatives.com"),
   title: "Selora Creatives — Creative Studio for the AI Era",
   description: "A world-class premium creative studio offering Branding, Graphic Design, Web Design, Motion Graphics, and AI-powered Advertising.",
   keywords: ["Creative Agency", "AI Design", "AI Advertising", "Motion Graphics", "Branding", "Web Development", "Awwwards Design"],
@@ -34,7 +35,11 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Selora Creatives — Creative Studio for the AI Era",
     description: "Future-ready creative studio delivering premium visual experiences through design, technology, and AI production.",
-  }
+  },
+  verification: {
+    // If you prefer to verify using HTML meta tag, replace the placeholder below
+    google: "google-site-verification-placeholder",
+  },
 };
 
 export default function RootLayout({
