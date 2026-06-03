@@ -145,6 +145,28 @@ function ContactFormContent() {
     e.preventDefault();
     if (!formData.name || !formData.email) return;
 
+    // Send brief submission asynchronously to FormSubmit endpoint in the background
+    try {
+      fetch("https://formsubmit.co/ajax/seloracreatives@gmail.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          "Business Name": formData.businessName,
+          "Project Type": formData.projectType,
+          "Estimated Budget": formData.budget,
+          "Project Brief": formData.message,
+          _subject: `New Selora Website Brief from ${formData.name}`
+        })
+      });
+    } catch (err) {
+      console.error("Form submission failed", err);
+    }
+
     setFormSubmitted(true);
     confetti({
       particleCount: 100,

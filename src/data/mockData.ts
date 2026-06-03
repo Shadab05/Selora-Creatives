@@ -103,12 +103,12 @@ export const projectsData: Project[] = [
   },
   {
     id: "unboxing-velora-skin",
-    title: "Velora Skin Serum",
+    title: "Act+Acre Hair Mask",
     category: "Unboxing & Product Demo",
-    tagline: "Velora Skin Radiance Repair — Vitamin C + Peptides. Brightens • Hydrates • Smooths.",
+    tagline: "Act+Acre Restorative Hair Mask — Cold Pressed Clinical Hair Care. Nourishes • Repairs • Hydrates.",
     image: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=1200&q=80",
-    challenge: "Skincare brands require detailed close-ups to demonstrate texture and unboxing appeal. Velocity and viscosity need to look natural to build checkout confidence.",
-    solution: "Produced an organic unboxing demo showing texture viscosity, pipette application, and rapid skin absorption details using high-conversion scripting.",
+    challenge: "Haircare brands require detailed close-ups to demonstrate texture, ingredient quality, and application appeal. Viscosity and consistency need to look natural to build buyer confidence.",
+    solution: "Produced an organic unboxing and texture demo showing the cold-pressed formula, smooth application, and rich hair absorption details using high-conversion scripts.",
     results: [
       "Cart abandonment rates dropped by 18% on product page.",
       "Average user session length increased by 120s.",

@@ -29,8 +29,8 @@ export default function PricingPage() {
 
   const getPlanPrice = (planId: string) => {
     if (currency === "INR") {
-      if (planId === "service-logo") return "₹3,999";
-      if (planId === "service-poster") return "₹3,499";
+      if (planId === "service-logo") return "₹1,999";
+      if (planId === "service-poster") return "₹2,499";
       if (planId === "service-web") return "₹12,499";
       if (planId === "service-ads") return "₹5,999";
       if (planId === "package-basic") return "₹19,999";
@@ -59,8 +59,8 @@ export default function PricingPage() {
   const getCalculatorRates = () => {
     if (currency === "INR") {
       return {
-        logo: 3999,
-        poster: 3499,
+        logo: 1999,
+        poster: 2499,
         web: 12499,
         ad: 5999,
         retainer: 25000,

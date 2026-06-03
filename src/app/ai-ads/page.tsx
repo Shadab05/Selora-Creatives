@@ -45,14 +45,25 @@ export default function AIAdsPage() {
     },
     {
       id: "unboxing-velora",
-      title: "Velora Skin Serum",
+      title: "Act+Acre Hair Mask",
       category: "Unboxing & Demo",
       format: "9:16 Vertical",
       metric: "+55% Conversion",
-      tagline: "Brightens • Hydrates • Smooths.",
-      description: "Macro skincare application showcase showing unboxing dynamics, pipette viscosity, and skin absorption texture.",
+      tagline: "Nourishes • Repairs • Hydrates.",
+      description: "Macro haircare application showcase showing unboxing dynamics, mask cream viscosity, and hair hydration texture.",
       image: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80",
       videoUrl: "/videos/Cosmetic serum beauty ad.mp4"
+    },
+    {
+      id: "luxury-bag-ad",
+      title: "Maison Aurelle Luna Bag",
+      category: "TV Spot Ad",
+      format: "9:16 Vertical",
+      metric: "2.8x CTR Boost",
+      tagline: "Italian Leather • Handcrafted Luxury.",
+      description: "Cinematic hypermotion sequence blending Italian leather folds of the Luna Bag with natural outdoor environment physics and motion tracking.",
+      image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=600&q=80",
+      videoUrl: "/videos/Luxury bag ad.mp4"
     }
   ];
 
@@ -132,7 +143,7 @@ export default function AIAdsPage() {
             Recent Campaign Creatives
           </h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {adsCategories.map((ad) => (
               <div 
                 key={ad.id} 

@@ -3,31 +3,31 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowRight, 
-  ArrowUpRight, 
-  Play, 
-  Pause, 
-  Layers, 
-  Sparkles, 
-  Tv, 
-  Smartphone, 
-  Users, 
-  Clock, 
-  Check, 
-  ChevronDown, 
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Play,
+  Pause,
+  Layers,
+  Sparkles,
+  Tv,
+  Smartphone,
+  Users,
+  Clock,
+  Check,
+  ChevronDown,
   Send,
   X
 } from "lucide-react";
 import HeroCanvas from "@/components/HeroCanvas";
-import { 
-  projectsData, 
-  servicesData, 
-  testimonialsData, 
+import {
+  projectsData,
+  servicesData,
+  testimonialsData,
   pricingServices,
   pricingPackages,
-  pricingPlans, 
-  faqData 
+  pricingPlans,
+  faqData
 } from "@/data/mockData";
 import confetti from "canvas-confetti";
 
@@ -56,7 +56,7 @@ export default function HomePage() {
   // AI Ad Showcase state
   const [activeAdCategory, setActiveAdCategory] = useState("ugc");
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
-  
+
   // FAQ active state
   const [activeFaq, setActiveFaq] = useState<number>(0);
 
@@ -82,8 +82,8 @@ export default function HomePage() {
 
   const getPlanPrice = (planId: string) => {
     if (currency === "INR") {
-      if (planId === "service-logo") return "₹3,999";
-      if (planId === "service-poster") return "₹3,499";
+      if (planId === "service-logo") return "₹1,999";
+      if (planId === "service-poster") return "₹2,499";
       if (planId === "service-web") return "₹12,499";
       if (planId === "service-ads") return "₹5,999";
       if (planId === "package-basic") return "₹19,999";
@@ -142,14 +142,14 @@ export default function HomePage() {
         const [entry] = entries;
         if (entry.isIntersecting) {
           let start = 0;
-          const endProjects = 150;
-          const endAssets = 10000;
-          const endIndustries = 15;
-          const endHours = 2500;
+          const endProjects = 50;
+          const endAssets = 100;
+          const endIndustries = 10;
+          const endHours = 1000;
           const duration = 2000;
           const steps = 50;
           const stepTime = duration / steps;
-          
+
           let currentStep = 0;
           const timer = setInterval(() => {
             currentStep++;
@@ -170,7 +170,7 @@ export default function HomePage() {
               });
             }
           }, stepTime);
-          
+
           observer.unobserve(entry.target);
         }
       },
@@ -196,7 +196,7 @@ export default function HomePage() {
     let height = 0;
     let animFrame: number;
     let time = 0;
-    
+
     let currentMode = 0;
     let transitionGlitch = 0;
 
@@ -258,7 +258,7 @@ export default function HomePage() {
       const fov = 480;
       let pt = rotateY(x, y, z, rotY + 0.785); // Isometric Y angle ~45 deg
       pt = rotateX(pt.x, pt.y, pt.z, rotX + 0.615); // Isometric X angle ~35.26 deg
-      
+
       const scale = (fov / (fov + pt.z + 100)) * 2.4; // 2.4x scale multiplier for larger isometric rendering
       return {
         x: pt.x * scale + width / 2,
@@ -271,14 +271,14 @@ export default function HomePage() {
     // Helper: Draw 3D Isometric Box
     const drawIsoBox = (x: number, y: number, z: number, w: number, h: number, d: number, strokeColor: string, fillColor: string, drawGrid = false) => {
       const verts = [
-        { x: x - w/2, y: y - h/2, z: z - d/2 }, // 0
-        { x: x + w/2, y: y - h/2, z: z - d/2 }, // 1
-        { x: x + w/2, y: y + h/2, z: z - d/2 }, // 2
-        { x: x - w/2, y: y + h/2, z: z - d/2 }, // 3
-        { x: x - w/2, y: y - h/2, z: z + d/2 }, // 4
-        { x: x + w/2, y: y - h/2, z: z + d/2 }, // 5
-        { x: x + w/2, y: y + h/2, z: z + d/2 }, // 6
-        { x: x - w/2, y: y + h/2, z: z + d/2 }  // 7
+        { x: x - w / 2, y: y - h / 2, z: z - d / 2 }, // 0
+        { x: x + w / 2, y: y - h / 2, z: z - d / 2 }, // 1
+        { x: x + w / 2, y: y + h / 2, z: z - d / 2 }, // 2
+        { x: x - w / 2, y: y + h / 2, z: z - d / 2 }, // 3
+        { x: x - w / 2, y: y - h / 2, z: z + d / 2 }, // 4
+        { x: x + w / 2, y: y - h / 2, z: z + d / 2 }, // 5
+        { x: x + w / 2, y: y + h / 2, z: z + d / 2 }, // 6
+        { x: x - w / 2, y: y + h / 2, z: z + d / 2 }  // 7
       ];
 
       const pts = verts.map(v => project(v.x + glitchX, v.y + glitchY, v.z));
@@ -340,7 +340,7 @@ export default function HomePage() {
     // Helper: Draw text cube
     const drawFloatingTextCube = (x: number, y: number, z: number, size: number, text: string, color: string) => {
       drawIsoBox(x, y, z, size, size, size, "rgba(168, 85, 247, 0.5)", "rgba(168, 85, 247, 0.15)");
-      
+
       const pt = project(x + glitchX, y + glitchY, z);
       if (pt.visible) {
         ctx.fillStyle = color || "#ffffff";
@@ -398,10 +398,10 @@ export default function HomePage() {
 
         // Slanted Screen frame
         const screenW = 95;
-        const scrBL = project(-screenW/2, platformY - 12, -25);
-        const scrBR = project(screenW/2, platformY - 12, -25);
-        const scrTR = project(screenW/2, platformY - 67, -42);
-        const scrTL = project(-screenW/2, platformY - 67, -42);
+        const scrBL = project(-screenW / 2, platformY - 12, -25);
+        const scrBR = project(screenW / 2, platformY - 12, -25);
+        const scrTR = project(screenW / 2, platformY - 67, -42);
+        const scrTL = project(-screenW / 2, platformY - 67, -42);
 
         if (scrBL.visible && scrBR.visible && scrTR.visible && scrTL.visible) {
           ctx.beginPath();
@@ -422,9 +422,9 @@ export default function HomePage() {
           for (let i = 0; i < lineCount; i++) {
             const ratioY = 0.15 + (i / lineCount) * 0.7;
             const codeWidth = (screenW - 16) * (0.35 + 0.5 * Math.sin(i * 1.9 + time * 0.05));
-            
-            const ptL = project(-screenW/2 + 8, platformY - 12 + (-55) * ratioY, -25 + (-17) * ratioY);
-            const ptR = project(-screenW/2 + 8 + Math.max(10, codeWidth), platformY - 12 + (-55) * ratioY, -25 + (-17) * ratioY);
+
+            const ptL = project(-screenW / 2 + 8, platformY - 12 + (-55) * ratioY, -25 + (-17) * ratioY);
+            const ptR = project(-screenW / 2 + 8 + Math.max(10, codeWidth), platformY - 12 + (-55) * ratioY, -25 + (-17) * ratioY);
 
             if (ptL.visible && ptR.visible) {
               ctx.beginPath();
@@ -475,10 +475,10 @@ export default function HomePage() {
 
         // Inner vertical video face
         const phW = 44;
-        const phBL = project(-phW/2, platformY - 6, -5);
-        const phBR = project(phW/2, platformY - 6, -5);
-        const phTR = project(phW/2, platformY - 90, -5);
-        const phTL = project(-phW/2, platformY - 90, -5);
+        const phBL = project(-phW / 2, platformY - 6, -5);
+        const phBR = project(phW / 2, platformY - 6, -5);
+        const phTR = project(phW / 2, platformY - 90, -5);
+        const phTL = project(-phW / 2, platformY - 90, -5);
 
         if (phBL.visible && phBR.visible && phTR.visible && phTL.visible) {
           ctx.beginPath();
@@ -497,9 +497,9 @@ export default function HomePage() {
           if (pCenter.visible) {
             ctx.beginPath();
             const ps = 7;
-            ctx.moveTo(pCenter.x - ps/2, pCenter.y - ps);
+            ctx.moveTo(pCenter.x - ps / 2, pCenter.y - ps);
             ctx.lineTo(pCenter.x + ps, pCenter.y);
-            ctx.lineTo(pCenter.x - ps/2, pCenter.y + ps);
+            ctx.lineTo(pCenter.x - ps / 2, pCenter.y + ps);
             ctx.closePath();
             ctx.fillStyle = "rgba(168, 85, 247, 0.9)";
             ctx.fill();
@@ -586,7 +586,7 @@ export default function HomePage() {
         ctx.strokeStyle = "rgba(168, 85, 247, 0.15)";
         ctx.lineWidth = 0.8;
         const boardY = platformY - 11;
-        
+
         // Bezier curve vector drafting
         ctx.strokeStyle = "rgba(168, 85, 247, 0.8)";
         ctx.lineWidth = 2;
@@ -594,8 +594,8 @@ export default function HomePage() {
         const steps = 30;
         for (let i = 0; i <= steps; i++) {
           const t = i / steps;
-          const x = -40 * Math.pow(1-t, 3) + 3 * (-15) * t * Math.pow(1-t, 2) + 3 * 15 * t*t * (1-t) + 40 * t*t*t;
-          const z = -20 * Math.pow(1-t, 3) + 3 * 25 * t * Math.pow(1-t, 2) + 3 * (-25) * t*t * (1-t) + 20 * t*t*t;
+          const x = -40 * Math.pow(1 - t, 3) + 3 * (-15) * t * Math.pow(1 - t, 2) + 3 * 15 * t * t * (1 - t) + 40 * t * t * t;
+          const z = -20 * Math.pow(1 - t, 3) + 3 * 25 * t * Math.pow(1 - t, 2) + 3 * (-25) * t * t * (1 - t) + 20 * t * t * t;
           const pt = project(x, boardY, z);
           if (pt.visible) {
             if (prevCurvePt) {
@@ -620,8 +620,8 @@ export default function HomePage() {
           const pt = project(cp.x, boardY, cp.z);
           if (pt.visible) {
             const size = 5 * pt.scale;
-            ctx.fillRect(pt.x - size/2, pt.y - size/2, size, size);
-            ctx.strokeRect(pt.x - size/2, pt.y - size/2, size, size);
+            ctx.fillRect(pt.x - size / 2, pt.y - size / 2, size, size);
+            ctx.strokeRect(pt.x - size / 2, pt.y - size / 2, size, size);
           }
         });
 
@@ -701,7 +701,7 @@ export default function HomePage() {
         // Exploded layered sheets
         const sheetW = 105;
         const sheetD = 135;
-        
+
         // Draw layers (bottom, mid, top)
         drawIsoBox(0, platformY - 15, 0, sheetW, 2, sheetD, "rgba(168, 85, 247, 0.45)", "rgba(15, 10, 25, 0.25)");
         drawIsoBox(0, platformY - 45, 0, sheetW, 2, sheetD, "rgba(255, 255, 255, 0.35)", "rgba(255, 255, 255, 0.02)");
@@ -777,6 +777,28 @@ export default function HomePage() {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email) return;
+
+    // Async submission to FormSubmit backend in background
+    try {
+      fetch("https://formsubmit.co/ajax/seloracreatives@gmail.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          "Business Name": formData.businessName,
+          "Project Type": formData.projectType,
+          "Estimated Budget": formData.budget,
+          "Project Brief": formData.message,
+          _subject: `New Selora Website Inquiry from ${formData.name}`
+        })
+      });
+    } catch (err) {
+      console.error("Form submission failed", err);
+    }
 
     setFormSubmitted(true);
     confetti({
@@ -880,7 +902,7 @@ export default function HomePage() {
             </div>
           </motion.div>
         </div>
-        
+
         {/* Seamless transition gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black to-transparent pointer-events-none z-10" />
       </section>
@@ -912,11 +934,10 @@ export default function HomePage() {
                 <button
                   key={tab.id}
                   onClick={() => setShowreelMode(tab.id)}
-                  className={`px-5 py-2.5 rounded-full font-heading text-[10px] sm:text-xs font-extrabold uppercase tracking-wider transition-all duration-300 ${
-                    showreelMode === tab.id
+                  className={`px-5 py-2.5 rounded-full font-heading text-[10px] sm:text-xs font-extrabold uppercase tracking-wider transition-all duration-300 ${showreelMode === tab.id
                       ? "bg-accent text-black font-extrabold"
                       : "text-studioGray-300 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -927,7 +948,7 @@ export default function HomePage() {
           {/* Clean borderless floating 3D canvas container */}
           <div className="relative w-full max-w-4xl h-[550px] flex items-center justify-center">
             <canvas ref={showreelCanvasRef} className="w-full h-full block opacity-100 z-10" />
-            
+
             {/* Background glowing ambient light orbs under the canvas */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-accent/5 blur-[80px] pointer-events-none z-0" />
           </div>
@@ -983,7 +1004,7 @@ export default function HomePage() {
             </div>
             <div className="glass-card p-8 rounded-2xl flex flex-col justify-center">
               <span className="font-heading text-4xl md:text-5xl font-extrabold text-accent mb-2">
-                {stats.hours.toLocaleString()}h+
+                {stats.hours.toLocaleString()}+
               </span>
               <span className="text-xs uppercase tracking-wider font-heading font-bold text-studioGray-400">
                 Hours Saved via AI
@@ -1018,7 +1039,7 @@ export default function HomePage() {
               >
                 {/* Glow overlay */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 blur-2xl group-hover:bg-accent/15 transition-all duration-500 rounded-full" />
-                
+
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-6 group-hover:bg-accent/10 group-hover:text-accent transition-all duration-300">
                     {service.id === "ai-ads" && <Tv className="w-5 h-5" />}
@@ -1071,7 +1092,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {projectsData.map((project, index) => (
-              <motion.div 
+              <motion.div
                 key={project.id}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1086,7 +1107,7 @@ export default function HomePage() {
                   alt={project.title}
                   className="absolute inset-0 w-full h-full object-cover group-hover:opacity-0 transition-opacity duration-500 brightness-75 z-10"
                 />
-                
+
                 {/* Inline Hover Video */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-black">
                   <video
@@ -1114,7 +1135,7 @@ export default function HomePage() {
                   <p className="text-studioGray-300 text-xs font-light leading-relaxed mb-4 line-clamp-2 opacity-80 group-hover:opacity-100 transition-opacity">
                     {project.tagline}
                   </p>
-                  
+
                   {/* Small clean metric badges inside card */}
                   <div className="flex gap-4 pt-4 border-t border-white/10">
                     {project.metrics.slice(0, 2).map((metric, mi) => (
@@ -1168,11 +1189,10 @@ export default function HomePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveAdCategory(tab.id)}
-                  className={`px-6 py-2.5 rounded-full font-heading text-xs font-extrabold uppercase tracking-wider transition-all duration-300 ${
-                    activeAdCategory === tab.id
+                  className={`px-6 py-2.5 rounded-full font-heading text-xs font-extrabold uppercase tracking-wider transition-all duration-300 ${activeAdCategory === tab.id
                       ? "bg-accent text-black font-extrabold"
                       : "text-studioGray-300 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -1191,16 +1211,16 @@ export default function HomePage() {
                   <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-4 rounded-full bg-studioGray-800 z-30 flex items-center justify-center">
                     <div className="w-2.5 h-2.5 rounded-full bg-black/40 ml-auto mr-1.5" />
                   </div>
-                  
+
                   {/* Video Element (lazy-loaded when tab is active) */}
                   <video
                     key={activeAdCategory}
                     src={
-                      activeAdCategory === "ugc" 
-                        ? "/videos/perfume ad.mp4" 
+                      activeAdCategory === "ugc"
+                        ? "/videos/perfume ad.mp4"
                         : activeAdCategory === "unboxing"
-                        ? "/videos/Cosmetic serum beauty ad.mp4"
-                        : "/videos/Luxury bag ad.mp4"
+                          ? "/videos/Cosmetic serum beauty ad.mp4"
+                          : "/videos/Luxury bag ad.mp4"
                     }
                     autoPlay
                     muted
@@ -1217,11 +1237,11 @@ export default function HomePage() {
                   <div className="absolute bottom-6 inset-x-5 z-20 text-left pointer-events-none">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center font-heading font-extrabold text-[10px] text-accent">
-                        {activeAdCategory === "ugc" ? "MD" : activeAdCategory === "unboxing" ? "VS" : "MA"}
+                        {activeAdCategory === "ugc" ? "MD" : activeAdCategory === "unboxing" ? "AA" : "MA"}
                       </div>
                       <div>
                         <p className="text-[11px] font-bold text-white drop-shadow-md">
-                          {activeAdCategory === "ugc" ? "Miss Dior Perfume" : activeAdCategory === "unboxing" ? "Velora Skin Lab" : "Maison Aurelle Luna Bag"}
+                          {activeAdCategory === "ugc" ? "Miss Dior Perfume" : activeAdCategory === "unboxing" ? "Act+Acre Hair Care" : "Maison Aurelle Luna Bag"}
                         </p>
                         <p className="text-[9px] text-accent font-bold drop-shadow-md">
                           {activeAdCategory === "ugc" ? "UGC Campaign" : activeAdCategory === "unboxing" ? "Unboxing + Demo" : "Luxury Fashion + Hypermotion"}
@@ -1232,8 +1252,8 @@ export default function HomePage() {
                       {activeAdCategory === "ugc"
                         ? "Miss Dior Eau de Parfum. Discover your signature scent. Luxury review."
                         : activeAdCategory === "unboxing"
-                        ? "Velora Skin Radiance Repair Serum. Vitamin C + Peptides. Brightens • Hydrates • Smooths."
-                        : "MAISON AURELLE LUNA BAG. Italian Leather • Handcrafted Luxury. High-fidelity product visuals."}
+                          ? "Act+Acre Restorative Hair Mask. Cold Pressed Clinical Hair Care. Nourishes • Repairs • Hydrates."
+                          : "MAISON AURELLE LUNA BAG. Italian Leather • Handcrafted Luxury. High-fidelity product visuals."}
                     </p>
                   </div>
                 </div>
@@ -1310,13 +1330,13 @@ export default function HomePage() {
               <h3 className="font-heading text-2xl md:text-3xl font-extrabold mb-4">
                 {activeAdCategory === "ugc" && "High-Converting UGC Perfume Ads"}
                 {activeAdCategory === "hypermotion" && "Hypermotion Product Commercials"}
-                {activeAdCategory === "unboxing" && "Skincare Unboxings & Product Demos"}
+                {activeAdCategory === "unboxing" && "Haircare Unboxings & Product Demos"}
                 {activeAdCategory === "luxury" && "Maison Aurelle: TV Spot Commercial"}
               </h3>
               <p className="text-studioGray-400 text-base leading-relaxed mb-6 font-light">
                 {activeAdCategory === "ugc" && "Establish instant trust. We script organic, platform-native reviews, cast fitting creators, and render your luxury product into the video with photorealistic precision, just like our Miss Dior campaign."}
                 {activeAdCategory === "hypermotion" && "Advanced camera paths and gravity simulations. Our Aroma Café commercial renders physical coffee beans and splash dynamics in 4K resolution at a fraction of traditional robotics cost."}
-                {activeAdCategory === "unboxing" && "Visually demonstrate textures, ingredients, and application. The Velora Skin Radiance Repair showcase displays luxury packaging, pipettes, and fluid absorption detail. Perfect for beauty and skincare."}
+                {activeAdCategory === "unboxing" && "Visually demonstrate textures, ingredients, and application. The Act+Acre Restorative Hair Mask showcase displays premium packaging, cream viscosity, and rich absorption detail. Perfect for beauty and haircare."}
                 {activeAdCategory === "luxury" && "Maison Aurelle Luna Bag. We composite the handcrafted luxury, Italian leather textures, and stitch details of the Luna Bag with physics-based sunlight reflections and fluid hypermotion paths."}
               </p>
 
@@ -1377,7 +1397,7 @@ export default function HomePage() {
               { step: "05", title: "Review", desc: "We iterate based on your feedback with speed, polishing textures and transitions." },
               { step: "06", title: "Launch", desc: "We deliver full-res cinematic exports and deploy custom web/code applications." }
             ].map((proc, index) => (
-              <div 
+              <div
                 key={proc.step}
                 className="glass-card p-8 rounded-2xl relative overflow-hidden group hover:translate-y-[-4px] transition-all duration-300"
               >
@@ -1456,11 +1476,10 @@ export default function HomePage() {
                   key={curr}
                   type="button"
                   onClick={() => setCurrency(curr)}
-                  className={`px-5 py-2.5 rounded-full font-heading text-xs font-extrabold tracking-wider transition-all duration-300 ${
-                    currency === curr
+                  className={`px-5 py-2.5 rounded-full font-heading text-xs font-extrabold tracking-wider transition-all duration-300 ${currency === curr
                       ? "bg-accent text-black font-extrabold shadow-md"
                       : "text-studioGray-300 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {curr === "USD" && "USD ($)"}
                   {curr === "INR" && "INR (₹)"}
@@ -1476,11 +1495,10 @@ export default function HomePage() {
                   key={type}
                   type="button"
                   onClick={() => setPricingType(type)}
-                  className={`px-5 py-2.5 rounded-full font-heading text-xs font-bold tracking-wider transition-all duration-300 ${
-                    pricingType === type
+                  className={`px-5 py-2.5 rounded-full font-heading text-xs font-bold tracking-wider transition-all duration-300 ${pricingType === type
                       ? "bg-accent text-black font-extrabold shadow-md"
                       : "text-studioGray-300 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {type === "services" ? "Individual Services" : "Package Bundles"}
                 </button>
@@ -1490,11 +1508,10 @@ export default function HomePage() {
 
           <div className={`grid grid-cols-1 md:grid-cols-2 ${pricingType === "services" ? "lg:grid-cols-4" : "lg:grid-cols-3 max-w-5xl mx-auto"} gap-8`}>
             {(pricingType === "services" ? pricingServices : pricingPackages).map((plan) => (
-              <div 
+              <div
                 key={plan.id}
-                className={`glass-card p-8 rounded-2xl flex flex-col justify-between relative ${
-                  plan.popular ? "border-accent/40 shadow-xl shadow-accent/5" : ""
-                }`}
+                className={`glass-card p-8 rounded-2xl flex flex-col justify-between relative ${plan.popular ? "border-accent/40 shadow-xl shadow-accent/5" : ""
+                  }`}
               >
                 {plan.popular && (
                   <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-accent text-black font-heading text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
@@ -1511,7 +1528,7 @@ export default function HomePage() {
                   <p className="text-studioGray-400 text-xs leading-relaxed mb-6 font-light">
                     {plan.description}
                   </p>
-                  
+
                   <ul className="flex flex-col gap-3 mb-8 border-t border-white/5 pt-6">
                     {plan.features.map((feat, fi) => (
                       <li key={fi} className="flex items-start gap-2.5 text-xs text-studioGray-300">
@@ -1524,11 +1541,10 @@ export default function HomePage() {
 
                 <Link
                   href={`/contact?plan=${plan.id}&currency=${currency}`}
-                  className={`w-full text-center py-3 rounded-full font-heading text-xs font-bold transition-all duration-300 ${
-                    plan.popular
+                  className={`w-full text-center py-3 rounded-full font-heading text-xs font-bold transition-all duration-300 ${plan.popular
                       ? "bg-accent hover:bg-accent-hover text-black"
                       : "glass-button text-white hover:border-accent hover:text-accent"
-                  }`}
+                    }`}
                 >
                   {plan.ctaText}
                 </Link>
@@ -1561,11 +1577,10 @@ export default function HomePage() {
                   <button
                     key={index}
                     onClick={() => setActiveFaq(index)}
-                    className={`w-full text-left p-5 rounded-xl border transition-all duration-300 flex items-center gap-4 ${
-                      isActive
+                    className={`w-full text-left p-5 rounded-xl border transition-all duration-300 flex items-center gap-4 ${isActive
                         ? "bg-white/5 border-accent text-white shadow-lg shadow-accent/5"
                         : "bg-white/[0.02] border-white/5 text-studioGray-400 hover:border-white/20 hover:text-white hover:bg-white/[0.03]"
-                    }`}
+                      }`}
                   >
                     <span className={`font-mono text-xs font-bold shrink-0 ${isActive ? "text-accent" : "text-studioGray-500"}`}>
                       [ Q_0{index + 1} ]
@@ -1727,11 +1742,10 @@ export default function HomePage() {
                         key={bud}
                         type="button"
                         onClick={() => setFormData({ ...formData, budget: bud })}
-                        className={`py-3 px-2 rounded-xl text-xs font-bold border transition-all duration-300 ${
-                          formData.budget === bud
+                        className={`py-3 px-2 rounded-xl text-xs font-bold border transition-all duration-300 ${formData.budget === bud
                             ? "bg-accent border-accent text-black"
                             : "bg-white/5 border-white/10 text-white hover:border-white/30"
-                        }`}
+                          }`}
                       >
                         {bud}
                       </button>
@@ -1775,7 +1789,7 @@ export default function HomePage() {
             >
               <X className="w-5 h-5" />
             </button>
-            
+
             <div className="aspect-[9/16] w-full max-h-[82vh] relative">
               <video
                 src={activeVideoUrl}

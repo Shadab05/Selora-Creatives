@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ArrowUpRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -35,14 +36,15 @@ export default function Navbar() {
   }, [pathname]);
 
   return (
-    <header
-      className={`fixed top-0 left-0 w-full transition-all duration-500 z-50 ${
-        isScrolled
-          ? "glass-navbar py-4"
-          : "bg-transparent py-6"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+    <>
+      <header
+        className={`fixed top-0 left-0 w-full transition-all duration-500 z-50 ${
+          isScrolled
+            ? "glass-navbar py-4"
+            : "bg-transparent py-6"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="group flex items-center gap-2">
           <span className="font-heading font-extrabold text-2xl tracking-widest text-white group-hover:text-accent transition-colors duration-300">
@@ -85,40 +87,61 @@ export default function Navbar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden text-white hover:text-accent transition-colors duration-300"
+          className="md:hidden text-white hover:text-accent transition-colors duration-300 relative z-50"
           aria-label={isOpen ? "Close Menu" : "Open Menu"}
         >
           {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
+    </header>
 
-      {/* Mobile Menu Panel */}
+    {/* Mobile Menu Panel outside header to bypass transition containing block context */}
+    <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 top-[73px] bg-black/95 backdrop-blur-lg z-40 flex flex-col px-8 py-12 md:hidden">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="fixed inset-0 w-screen h-screen bg-black/98 backdrop-blur-xl z-40 flex flex-col px-8 pt-28 pb-12 md:hidden overflow-y-auto"
+        >
           <div className="flex flex-col gap-6">
-            {navLinks.map((link) => {
+            {navLinks.map((link, idx) => {
               const isActive = pathname === link.href;
               return (
-                <Link
+                <motion.div
                   key={link.href}
-                  href={link.href}
-                  className={`font-heading text-2xl font-bold tracking-wider py-2 border-b border-white/5 ${
-                    isActive ? "text-accent" : "text-white/70"
-                  }`}
+                  initial={{ opacity: 0, x: -15 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.04, duration: 0.25 }}
                 >
-                  {link.label}
-                </Link>
+                  <Link
+                    href={link.href}
+                    className={`font-heading text-2xl font-bold tracking-wider py-2 border-b border-white/5 block ${
+                      isActive ? "text-accent" : "text-white/70 hover:text-white"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                </motion.div>
               );
             })}
-            <Link
-              href="/contact"
-              className="mt-6 w-full text-center py-4 bg-accent hover:bg-accent-hover text-black font-heading font-extrabold tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: navLinks.length * 0.04, duration: 0.3 }}
             >
-              Start a Project <ArrowUpRight className="w-5 h-5" />
-            </Link>
+              <Link
+                href="/contact"
+                className="mt-6 w-full text-center py-4 bg-accent hover:bg-accent-hover text-black font-heading font-extrabold tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                Start a Project <ArrowUpRight className="w-5 h-5" />
+              </Link>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
-    </header>
+    </AnimatePresence>
+    </>
   );
 }
